@@ -13,7 +13,6 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@nestjs/core",
-      "better-sqlite3",
       "unrs-resolver"
     ]
   }

@@ -138,14 +138,35 @@ The API server starts on `http://localhost:3000`.
 
 ### Running Tests
 
-Unit tests (uses SQLite in-memory, no PostgreSQL required):
+Tests run against a real PostgreSQL instance. Start a test database first:
+
+```bash
+docker run -d --name chainboard-test-db \
+  -e POSTGRES_USER=chainboard \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_DB=chainboard_test \
+  -p 5432:5432 \
+  postgres:15
+```
+
+Set the test database environment variables (or copy `.env.example` to `.env` and adjust):
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=chainboard
+DB_PASSWORD=secret
+DB_NAME=chainboard_test
+```
+
+Run unit tests:
 
 ```bash
 cd backend
 pnpm test
 ```
 
-E2E tests (uses SQLite in-memory, no PostgreSQL required):
+Run E2E tests:
 
 ```bash
 pnpm test:e2e
