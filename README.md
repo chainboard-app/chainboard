@@ -1,4 +1,4 @@
-# ⛓️ ChainBoard
+# ChainBoard
 
 > A feed-style Web3 discussion platform for multi-chain communities.
 
@@ -9,40 +9,38 @@
 
 ---
 
-## 🌐 What is ChainBoard?
+## What is ChainBoard?
 
 ChainBoard is an open-source, feed-style discussion platform built for Web3 communities. It lets developers, builders, and blockchain enthusiasts across different chains — starting with **Stellar** and **Ethereum** — share ideas, discuss projects, ask questions, and reward great content with crypto tips.
 
-Think of it as **Twitter/X meets Reddit, built natively for Web3.**
+---
+
+## Features
+
+- **Feed-style posts** — share thoughts, updates, and questions in a familiar format
+- **Multi-chain support** — Stellar and Ethereum to start, with more chains coming
+- **Dual authentication** — sign in with GitHub OAuth or your Web3 wallet (Freighter / MetaMask)
+- **On-chain tipping** — reward great posts with USDC directly on-chain
+- **Upvote system** — community-driven content ranking
+- **Chain tags** — filter and discover content by blockchain ecosystem
+- **Builder profiles** — showcase your projects, contributions, and on-chain activity
+- **Notifications** — stay updated on replies, tips, and mentions
 
 ---
 
-## ✨ Features
-
-- 🐦 **Feed-style posts** — share thoughts, updates, and questions in a familiar format
-- 🔗 **Multi-chain support** — Stellar and Ethereum to start, with more chains coming
-- 🔐 **Dual authentication** — sign in with GitHub OAuth or your Web3 wallet (Freighter / MetaMask)
-- 💸 **On-chain tipping** — reward great posts with USDC directly on-chain
-- 🗳️ **Upvote system** — community-driven content ranking
-- 🏷️ **Chain tags** — filter and discover content by blockchain ecosystem
-- 👤 **Builder profiles** — showcase your projects, contributions, and on-chain activity
-- 🔔 **Notifications** — stay updated on replies, tips, and mentions
-
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Frontend | React, TypeScript, TailwindCSS |
-| Backend | NestJS, PostgreSQL |
+| Backend | NestJS, TypeORM, PostgreSQL |
 | Smart Contracts | Soroban (Stellar), Solidity (Ethereum) |
 | Auth | GitHub OAuth, Freighter Wallet, MetaMask |
 | Payments | Stellar USDC, ERC-20 USDC |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 chainboard/
@@ -54,11 +52,13 @@ chainboard/
 │   │   └── utils/
 ├── backend/           # NestJS REST API
 │   ├── src/
-│   │   ├── auth/
-│   │   ├── posts/
-│   │   ├── users/
-│   │   ├── tips/
-│   │   └── notifications/
+│   │   ├── entities/      # TypeORM entities (User, Post, Tip)
+│   │   ├── migrations/    # Database migrations
+│   │   ├── data-source.ts # TypeORM CLI data source config
+│   │   ├── app.module.ts  # Main NestJS module
+│   │   └── main.ts        # Application entry point
+│   ├── test/              # E2E tests
+│   └── .env.example       # Environment variable template
 ├── contracts/         # Smart contracts
 │   ├── stellar/       # Soroban contracts
 │   └── ethereum/      # Solidity contracts
@@ -67,63 +67,131 @@ chainboard/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js v18+
+- Node.js v20+
 - pnpm
 - PostgreSQL
-- A Stellar wallet (Freighter)
-- A MetaMask wallet (for Ethereum features)
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/chainboard-app/chainboard.git
 cd chainboard
 
-# Install dependencies
 pnpm install
-
-# Set up environment variables
-cp .env.example .env
-# Fill in your env variables
-
-# Run database migrations
-pnpm run migration:run
-
-# Start development servers
-pnpm run dev
 ```
 
-### Environment Variables
+### Environment Setup
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Edit `backend/.env` with your PostgreSQL credentials:
 
 ```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/chainboard
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_NAME=chainboard
+```
 
-# Auth
-GITHUB_CLIENT_ID=your_github_client_id
-GITHUB_CLIENT_SECRET=your_github_client_secret
-JWT_SECRET=your_jwt_secret
+### Database Setup
 
-# Stellar
-STELLAR_NETWORK=testnet
-STELLAR_RPC_URL=https://soroban-testnet.stellar.org
+Create the PostgreSQL database:
 
-# Ethereum
-ETH_RPC_URL=your_eth_rpc_url
+```bash
+createdb chainboard
+```
+
+### Running Migrations
+
+```bash
+cd backend
+pnpm migration:run
+```
+
+To revert the last migration:
+
+```bash
+pnpm migration:revert
+```
+
+To generate a new migration after entity changes:
+
+```bash
+pnpm migration:generate src/migrations/MigrationName
+```
+
+### Running the Application
+
+```bash
+cd backend
+pnpm start:dev
+```
+
+The API server starts on `http://localhost:3000`.
+
+### Running Tests
+
+Unit tests (uses SQLite in-memory, no PostgreSQL required):
+
+```bash
+cd backend
+pnpm test
+```
+
+E2E tests (uses SQLite in-memory, no PostgreSQL required):
+
+```bash
+pnpm test:e2e
+```
+
+### Building
+
+```bash
+cd backend
+pnpm build
 ```
 
 ---
 
-## 🤝 Contributing
+## Database Schema
 
-We welcome contributions of all kinds! ChainBoard is built in the open, for the community.
+### User
+- `id` (UUID, primary key)
+- `githubId` (string, unique)
+- `username` (string)
+- `avatarUrl` (string, nullable)
+- `walletAddress` (string, nullable)
+- `createdAt` (timestamp)
 
-### How to contribute
+### Post
+- `id` (UUID, primary key)
+- `content` (text)
+- `chainTag` (string)
+- `upvotes` (integer, default 0)
+- `authorId` (UUID, foreign key to User)
+- `createdAt` (timestamp)
+
+### Tip
+- `id` (UUID, primary key)
+- `amount` (decimal)
+- `senderId` (UUID, foreign key to User)
+- `receiverId` (UUID, foreign key to User)
+- `postId` (UUID, foreign key to Post)
+- `txHash` (string)
+- `createdAt` (timestamp)
+
+---
+
+## Contributing
+
+We welcome contributions of all kinds! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 1. **Fork** the repository
 2. **Create** a feature branch: `git checkout -b feature/your-feature`
@@ -131,35 +199,12 @@ We welcome contributions of all kinds! ChainBoard is built in the open, for the 
 4. **Push** to your branch: `git push origin feature/your-feature`
 5. **Open** a Pull Request
 
-### Good first issues
-
-Check out issues tagged [`good first issue`](https://github.com/chainboard-app/chainboard/issues?q=is%3Aissue+label%3A%22good+first+issue%22) to get started.
-
-### Code of Conduct
-
-Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
-
 ---
 
-## 📜 License
+## License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🌍 Community
-
-- 🐦 Twitter/X: coming soon
-- 💬 Discord: Coming soon
-- 📖 Docs: Coming soon
-
----
-
-## 🙏 Acknowledgements
-
-Built with love for the Stellar and Ethereum communities.
-Supported by [GrantFox](https://grantfox.xyz) — open source grants platform.
-
----
-
-<p align="center">Made with ❤️ by the ChainBoard team</p>
+<p align="center">Made with love by the ChainBoard team</p>
