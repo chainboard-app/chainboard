@@ -46,6 +46,33 @@ $ pnpm run start:prod
 
 ## Run tests
 
+Tests run against a real PostgreSQL instance. You need a running PostgreSQL database before executing tests.
+
+### 1. Start PostgreSQL (Docker)
+
+```bash
+docker run -d --name chainboard-test-db \
+  -e POSTGRES_USER=chainboard \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_DB=chainboard_test \
+  -p 5432:5432 \
+  postgres:15
+```
+
+### 2. Set environment variables
+
+Copy `.env.example` to `.env.test` and adjust if needed:
+
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=chainboard
+DB_PASSWORD=secret
+DB_NAME=chainboard_test
+```
+
+### 3. Run the tests
+
 ```bash
 # unit tests
 $ pnpm run test
