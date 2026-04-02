@@ -6,9 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './../src/app.controller';
 import { AppService } from './../src/app.service';
-import { User } from './../src/entities/user.entity';
-import { Post } from './../src/entities/post.entity';
-import { Tip } from './../src/entities/tip.entity';
+import { testDatabaseConfig } from './../src/config/test-database.config';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -17,12 +15,7 @@ describe('AppController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({ isGlobal: true }),
-        TypeOrmModule.forRoot({
-          type: 'better-sqlite3',
-          database: ':memory:',
-          entities: [User, Post, Tip],
-          synchronize: true,
-        }),
+        TypeOrmModule.forRoot(testDatabaseConfig),
       ],
       controllers: [AppController],
       providers: [AppService],

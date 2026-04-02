@@ -2,6 +2,7 @@ import { DataSource, Repository } from 'typeorm';
 import { User } from './user.entity';
 import { Post } from './post.entity';
 import { Tip } from './tip.entity';
+import { testDatabaseConfig } from '../config/test-database.config';
 
 let dataSource: DataSource;
 let userRepo: Repository<User>;
@@ -9,12 +10,7 @@ let postRepo: Repository<Post>;
 let tipRepo: Repository<Tip>;
 
 beforeAll(async () => {
-  dataSource = new DataSource({
-    type: 'better-sqlite3',
-    database: ':memory:',
-    entities: [User, Post, Tip],
-    synchronize: true,
-  });
+  dataSource = new DataSource(testDatabaseConfig);
   await dataSource.initialize();
   userRepo = dataSource.getRepository(User);
   postRepo = dataSource.getRepository(Post);
