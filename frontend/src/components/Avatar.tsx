@@ -1,5 +1,5 @@
 import React from 'react';
-import type { UserProfile } from '../../types';
+import type { UserProfile } from '../types';
 
 interface AvatarProps {
   user: Pick<UserProfile, 'displayName' | 'avatarUrl'>;
