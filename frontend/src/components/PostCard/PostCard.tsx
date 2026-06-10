@@ -1,0 +1,183 @@
+import React, { useState } from 'react';
+import type { Post } from '../../types';
+import { CHAIN_CONFIG } from '../../data/mockData';
+import { Avatar } from '../Avatar';
+
+interface PostCardProps {
+  post: Post;
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return `${n}`;
+}
+
+export const PostCard: React.FC<PostCardProps> = ({ post }) => {
+  const [upvoted, setUpvoted] = useState(post.hasUpvoted ?? false);
+  const [upvoteCount, setUpvoteCount] = useState(post.upvotes);
+  const chain = CHAIN_CONFIG[post.chainTag];
+
+  const handleUpvote = () => {
+    if (upvoted) {
+      setUpvoted(false);
+      setUpvoteCount((c) => c - 1);
+    } else {
+      setUpvoted(true);
+      setUpvoteCount((c) => c + 1);
+    }
+  };
+
+  return (
+    <article
+      id={`post-${post.id}`}
+      className="post-card"
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: 16,
+        padding: '20px 24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        transition: 'border-color 0.2s, background 0.2s',
+        cursor: 'default',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Avatar user={post.author} size="sm" />
+          <div style={{ lineHeight: 1.3 }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: '#F1F5F9' }}>
+              {post.author.displayName}
+            </span>
+            {post.author.isVerified && (
+              <span
+                title="Verified"
+                style={{ marginLeft: 4, color: '#7B61FF', fontSize: 12 }}
+              >
+                ✓
+              </span>
+            )}
+            <div style={{ fontSize: 12, color: '#64748B' }}>
+              @{post.author.username} · {formatDate(post.createdAt)}
+            </div>
+          </div>
+        </div>
+
+        {/* Chain Badge */}
+        <span
+          style={{
+            background: chain.bg,
+            color: chain.color,
+            fontSize: 11,
+            fontWeight: 600,
+            padding: '4px 10px',
+            borderRadius: 99,
+            border: `1px solid ${chain.color}30`,
+            letterSpacing: '0.3px',
+            textTransform: 'uppercase',
+            flexShrink: 0,
+          }}
+        >
+          {chain.icon} {chain.label}
+        </span>
+      </div>
+
+      {/* Content */}
+      <p
+        style={{
+          margin: 0,
+          fontSize: 15,
+          lineHeight: 1.65,
+          color: '#CBD5E1',
+        }}
+      >
+        {post.content}
+      </p>
+
+      {/* Actions */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 24,
+          alignItems: 'center',
+          paddingTop: 4,
+          borderTop: '1px solid rgba(255,255,255,0.05)',
+        }}
+      >
+        {/* Upvote */}
+        <button
+          id={`upvote-${post.id}`}
+          onClick={handleUpvote}
+          aria-pressed={upvoted}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: upvoted ? '#7B61FF' : '#64748B',
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '4px 0',
+            transition: 'color 0.2s',
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill={upvoted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
+            <path d="M12 19V6M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {formatNumber(upvoteCount)}
+        </button>
+
+        {/* Comments */}
+        <button
+          id={`comment-${post.id}`}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: '#64748B',
+            fontSize: 13,
+            fontWeight: 600,
+            padding: '4px 0',
+            transition: 'color 0.2s',
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {formatNumber(post.commentsCount)}
+        </button>
+
+        {/* Tips */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            color: '#10B981',
+            fontSize: 13,
+            fontWeight: 600,
+            marginLeft: 'auto',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 6v12M9 10h6M9 14h6" strokeLinecap="round" />
+          </svg>
+          ${post.tipsReceived.toFixed(2)} USDC
+        </div>
+      </div>
+    </article>
+  );
+};
