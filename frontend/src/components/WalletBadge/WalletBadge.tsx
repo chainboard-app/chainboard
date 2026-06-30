@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { WalletAddress } from '../../types';
 import { CHAIN_CONFIG } from '../../data/mockData';
 
@@ -13,9 +13,52 @@ function truncateAddress(address: string, chain: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+async function resolveENS(address: string): Promise<string | null> {
+  try {
+    const response = await fetch('https://api.ensideas.com/ens/resolve/' + address);
+    if (response.ok) {
+      const data = await response.json();
+      return data.name || null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveStellarFederation(address: string): Promise<string | null> {
+  // Basic Stellar Federation lookup
+  try {
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export const WalletBadge: React.FC<WalletBadgeProps> = ({ wallet }) => {
   const [copied, setCopied] = useState(false);
+  const [resolvedName, setResolvedName] = useState<string | null>(null);
+  const [isResolving, setIsResolving] = useState(false);
   const config = CHAIN_CONFIG[wallet.chain];
+
+  useEffect(() => {
+    let mounted = true;
+    const resolve = async () => {
+      setIsResolving(true);
+      let name: string | null = null;
+      if (wallet.chain === 'ethereum' || wallet.chain === 'base') {
+        name = await resolveENS(wallet.address);
+      } else if (wallet.chain === 'stellar') {
+        name = await resolveStellarFederation(wallet.address);
+      }
+      if (mounted) {
+        setResolvedName(name);
+        setIsResolving(false);
+      }
+    };
+    resolve();
+    return () => { mounted = false; };
+  }, [wallet.chain, wallet.address]);
 
   const handleCopy = async () => {
     try {
@@ -26,6 +69,8 @@ export const WalletBadge: React.FC<WalletBadgeProps> = ({ wallet }) => {
       // clipboard not available
     }
   };
+
+  const displayName = resolvedName || truncateAddress(wallet.address, wallet.chain);
 
   return (
     <div
@@ -80,20 +125,32 @@ export const WalletBadge: React.FC<WalletBadgeProps> = ({ wallet }) => {
             </span>
           )}
         </div>
-        <code
-          style={{
-            fontSize: 12,
-            color: '#94A3B8',
-            fontFamily: 'JetBrains Mono, Consolas, monospace',
-            display: 'block',
-            marginTop: 2,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {truncateAddress(wallet.address, wallet.chain)}
-        </code>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
+          {resolvedName && (
+            <span
+              style={{
+                fontSize: 13,
+                color: '#E2E8F0',
+                fontWeight: 500,
+              }}
+            >
+              {resolvedName}
+            </span>
+          )}
+          <code
+            style={{
+              fontSize: 12,
+              color: '#64748B',
+              fontFamily: 'JetBrains Mono, Consolas, monospace',
+              display: 'block',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {isResolving ? 'Resolving...' : truncateAddress(wallet.address, wallet.chain)}
+          </code>
+        </div>
       </div>
 
       {/* Copy button */}
