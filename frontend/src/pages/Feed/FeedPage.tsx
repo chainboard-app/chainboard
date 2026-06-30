@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PostCard } from '../../components/PostCard/PostCard';
+import { PostComposer } from '../../components/PostComposer/PostComposer';
 import { mockPosts } from '../../data/mockData';
 import { CHAIN_CONFIG } from '../../data/mockData';
 import type { Chain } from '../../types';
@@ -57,6 +58,8 @@ export function FeedPage() {
           </button>
         ))}
       </div>
+
+      <PostComposer />
 
       <div className="space-y-4">
         {filteredPosts.map((post) => (
