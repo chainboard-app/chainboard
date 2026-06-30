@@ -7,6 +7,14 @@ interface PostCardProps {
   post: Post;
 }
 
+type ReactionType = 'fire' | 'build' | 'handshake';
+
+const REACTIONS: { type: ReactionType; emoji: string; label: string }[] = [
+  { type: 'fire', emoji: '🔥', label: 'Insightful' },
+  { type: 'build', emoji: '🛠️', label: 'Building' },
+  { type: 'handshake', emoji: '🤝', label: 'Helpful' },
+];
+
 function formatDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -20,6 +28,13 @@ function formatNumber(n: number): string {
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [upvoted, setUpvoted] = useState(post.hasUpvoted ?? false);
   const [upvoteCount, setUpvoteCount] = useState(post.upvotes);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [userReactions, setUserReactions] = useState<Set<ReactionType>>(new Set());
+  const [reactionCounts, setReactionCounts] = useState<Record<ReactionType, number>>({
+    fire: 0,
+    build: 0,
+    handshake: 0,
+  });
   const chain = CHAIN_CONFIG[post.chainTag];
 
   const handleUpvote = () => {
@@ -31,6 +46,20 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       setUpvoteCount((c) => c + 1);
     }
   };
+
+  const handleToggleReaction = (type: ReactionType) => {
+    const newSet = new Set(userReactions);
+    if (newSet.has(type)) {
+      newSet.delete(type);
+      setReactionCounts(prev => ({ ...prev, [type]: prev[type] - 1 }));
+    } else {
+      newSet.add(type);
+      setReactionCounts(prev => ({ ...prev, [type]: prev[type] + 1 }));
+    }
+    setUserReactions(newSet);
+  };
+
+  const totalReactions = Object.values(reactionCounts).reduce((sum, val) => sum + val, 0);
 
   return (
     <article
@@ -49,11 +78,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Avatar user={post.author} size="sm" />
           <div style={{ lineHeight: 1.3 }}>
-            <span style={{ fontWeight: 600, fontSize: 14, color: '#F1F5F9' }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: '#F1F5F9' }>
               {post.author.displayName}
             </span>
             {post.author.isVerified && (
@@ -64,7 +93,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 ✓
               </span>
             )}
-            <div style={{ fontSize: 12, color: '#64748B' }}>
+            <div style={{ fontSize: 12, color: '#64748B' }>
               @{post.author.username} · {formatDate(post.createdAt)}
             </div>
           </div>
@@ -101,6 +130,35 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         {post.content}
       </p>
 
+      {/* Reactions */}
+      {totalReactions > 0 && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {REACTIONS.filter(r => reactionCounts[r.type] > 0).map(reaction => (
+            <button
+              key={reaction.type}
+              onClick={() => handleToggleReaction(reaction.type)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                background: userReactions.has(reaction.type) ? 'rgba(123, 97, 255, 0.15)' : 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 999,
+                padding: '4px 10px',
+                cursor: 'pointer',
+                color: '#E2E8F0',
+                fontSize: 13,
+                fontWeight: 500,
+                transition: 'all 0.2s',
+              }}
+            >
+              {reaction.emoji}
+              {reactionCounts[reaction.type]}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Actions */}
       <div
         style={{
@@ -109,8 +167,75 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           alignItems: 'center',
           paddingTop: 4,
           borderTop: '1px solid rgba(255,255,255,0.05)',
+          position: 'relative',
         }}
       >
+        {/* Reaction Picker */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowReactionPicker(!showReactionPicker)}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              color: '#64748B',
+              fontSize: 13,
+              fontWeight: 600,
+              padding: '4px 0',
+              transition: 'color 0.2s',
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <circle cx="8" cy="12" r="1" />
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="16" cy="12" r="1" />
+            </svg>
+            React
+          </button>
+
+          {showReactionPicker && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: '100%',
+                left: 0,
+                background: 'rgba(15, 23, 42, 0.98)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 12,
+                padding: 8,
+                display: 'flex',
+                gap: 4,
+                marginBottom: 8,
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              }}
+            >
+              {REACTIONS.map(reaction => (
+                <button
+                  key={reaction.type}
+                  onClick={() => {
+                    handleToggleReaction(reaction.type);
+                    setShowReactionPicker(false);
+                  }}
+                  style={{
+                    background: userReactions.has(reaction.type) ? 'rgba(123, 97, 255, 0.2)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: 20,
+                    padding: '6px 10px',
+                    borderRadius: 8,
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {reaction.emoji}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Upvote */}
         <button
           id={`upvote-${post.id}`}
