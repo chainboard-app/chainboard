@@ -1,5 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
-import { Chain, WalletAddress, NotificationType, NotificationDelivery } from '../../common/types';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
+import {
+  Chain,
+  WalletAddress,
+  NotificationType,
+  NotificationDelivery,
+} from '../../common/types';
 import { Post } from '../../posts/entities/post.entity';
 import { Tip } from '../../tips/entities/tip.entity';
 

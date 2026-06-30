@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { TimeWindow } from '../../types';
+import type { TimeWindow } from '../../types';
 import { mockUser } from '../../data/mockData';
 
 const mockLeaderboard = {
@@ -48,7 +48,7 @@ export function LeaderboardPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {mockLeaderboard.topTippers.map((entry, index) => (
               <div
-                key={entry.userId}
+                key={entry.id}
                 className="flex items-center gap-4 p-4 border-b border-gray-100 last:border-0"
               >
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 font-bold">
@@ -81,7 +81,7 @@ export function LeaderboardPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {mockLeaderboard.topEarners.map((entry, index) => (
               <div
-                key={entry.userId}
+                key={entry.id}
                 className="flex items-center gap-4 p-4 border-b border-gray-100 last:border-0"
               >
                 <div className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 font-bold">

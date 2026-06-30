@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { CommunitiesService } from './communities.service';
 import { Community } from './entities/community.entity';
-import { Chain } from '../common/types';
+import type { Chain } from '../common/types';
 
 @Controller('communities')
 export class CommunitiesController {

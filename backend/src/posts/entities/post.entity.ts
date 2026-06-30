@@ -1,5 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Chain } from '../../common/types';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import type { Chain } from '../../common/types';
 import { User } from '../../users/entities/user.entity';
 import { Community } from '../../communities/entities/community.entity';
 
@@ -36,7 +43,9 @@ export class Post {
   @Column({ default: 'active' })
   status: 'active' | 'deleted';
 
-  @ManyToOne(() => Community, (community) => community.posts, { nullable: true })
+  @ManyToOne(() => Community, (community) => community.posts, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'communityId' })
   community?: Community;
 
