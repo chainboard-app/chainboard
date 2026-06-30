@@ -6,17 +6,21 @@ export interface WalletAddress {
   label?: string;
 }
 
-export enum NotificationType {
-  REPLY = 'reply',
-  TIP = 'tip',
-  MENTION = 'mention',
-}
+export type NotificationType = 'reply' | 'tip' | 'mention';
 
-export enum NotificationDelivery {
-  IN_APP = 'in_app',
-  EMAIL = 'email',
-  BOTH = 'both',
-}
+export const NotificationType = {
+  REPLY: 'reply',
+  TIP: 'tip',
+  MENTION: 'mention',
+} as const;
+
+export type NotificationDelivery = 'in_app' | 'email' | 'both';
+
+export const NotificationDelivery = {
+  IN_APP: 'in_app',
+  EMAIL: 'email',
+  BOTH: 'both',
+} as const;
 
 export interface UserProfile {
   id: string;
@@ -51,10 +55,12 @@ export interface Post {
   community?: Community;
 }
 
-export enum GatingType {
-  TOKEN = 'token',
-  NFT = 'nft',
-}
+export type GatingType = 'token' | 'nft';
+
+export const GatingType = {
+  TOKEN: 'token',
+  NFT: 'nft',
+} as const;
 
 export interface Community {
   id: string;

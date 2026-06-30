@@ -7,14 +7,17 @@ export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get('preferences/:userId')
-  getPreferences(@Param('userId') userId: string): Promise<Record<NotificationType, NotificationDelivery>> {
+  getPreferences(
+    @Param('userId') userId: string,
+  ): Promise<Record<NotificationType, NotificationDelivery>> {
     return this.notificationsService.getPreferences(userId);
   }
 
   @Patch('preferences/:userId')
   updatePreferences(
     @Param('userId') userId: string,
-    @Body() preferences: Partial<Record<NotificationType, NotificationDelivery>>,
+    @Body()
+    preferences: Partial<Record<NotificationType, NotificationDelivery>>,
   ): Promise<Record<NotificationType, NotificationDelivery>> {
     return this.notificationsService.updatePreferences(userId, preferences);
   }

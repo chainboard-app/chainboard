@@ -6,7 +6,9 @@ export class ReputationController {
   constructor(private readonly reputationService: ReputationService) {}
 
   @Get(':userId')
-  getReputation(@Param('userId') userId: string): Promise<{ score: number; userId: string }> {
+  getReputation(
+    @Param('userId') userId: string,
+  ): Promise<{ score: number; userId: string }> {
     return this.reputationService.getReputation(userId);
   }
 }

@@ -1,13 +1,14 @@
-import { Injectable, CACHE_MANAGER, Inject } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
-import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { Tip } from './entities/tip.entity';
 import { User } from '../users/entities/user.entity';
 
 export type TimeWindow = '7d' | '30d' | 'all';
 
-interface LeaderboardEntry {
+export interface LeaderboardEntry {
   userId: string;
   displayName: string;
   username: string;
@@ -15,7 +16,7 @@ interface LeaderboardEntry {
   amount: number;
 }
 
-interface LeaderboardResponse {
+export interface LeaderboardResponse {
   topTippers: LeaderboardEntry[];
   topEarners: LeaderboardEntry[];
 }

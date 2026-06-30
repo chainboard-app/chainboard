@@ -23,7 +23,9 @@ export class ReputationService {
     return Math.floor(tipsReceivedScore + upvotesScore + followersScore);
   }
 
-  async getReputation(userId: string): Promise<{ score: number; userId: string }> {
+  async getReputation(
+    userId: string,
+  ): Promise<{ score: number; userId: string }> {
     const score = await this.calculateReputation(userId);
     return { score, userId };
   }

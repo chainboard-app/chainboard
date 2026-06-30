@@ -11,7 +11,9 @@ export class NotificationsService {
     private usersRepository: Repository<User>,
   ) {}
 
-  async getPreferences(userId: string): Promise<Record<NotificationType, NotificationDelivery>> {
+  async getPreferences(
+    userId: string,
+  ): Promise<Record<NotificationType, NotificationDelivery>> {
     const user = await this.usersRepository.findOneBy({ id: userId });
     if (!user) {
       return {
@@ -31,7 +33,10 @@ export class NotificationsService {
     if (!user) {
       throw new Error('User not found');
     }
-    user.notificationPreferences = { ...user.notificationPreferences, ...preferences };
+    user.notificationPreferences = {
+      ...user.notificationPreferences,
+      ...preferences,
+    };
     await this.usersRepository.save(user);
     return user.notificationPreferences;
   }

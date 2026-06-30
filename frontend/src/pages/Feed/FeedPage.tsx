@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PostCard } from '../../components/PostCard/PostCard';
 import { mockPosts } from '../../data/mockData';
-import { Chain, CHAIN_CONFIG } from '../../data/mockData';
+import { CHAIN_CONFIG } from '../../data/mockData';
+import type { Chain } from '../../types';
 
 export function FeedPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedChain = (searchParams.get('chain') as Chain) || 'all';
+  const selectedChain = ((searchParams.get('chain') as Chain) || 'all') as Chain | 'all';
 
   const filteredPosts = useMemo(() => {
     if (selectedChain === 'all') {

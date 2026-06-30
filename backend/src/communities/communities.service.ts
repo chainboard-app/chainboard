@@ -61,10 +61,11 @@ export class CommunitiesService {
     walletAddress: string,
   ): Promise<boolean> {
     try {
-      const rpcUrl = community.chain === 'base' 
-        ? 'https://mainnet.base.org' 
-        : 'https://mainnet.infura.io/v3/YOUR_INFURA_KEY';
-      
+      const rpcUrl =
+        community.chain === 'base'
+          ? 'https://mainnet.base.org'
+          : 'https://mainnet.infura.io/v3/YOUR_INFURA_KEY';
+
       const response = await fetch(rpcUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
