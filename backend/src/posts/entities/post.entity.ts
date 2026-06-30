@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import type { Chain } from '../../common/types';
 import { User } from '../../users/entities/user.entity';
@@ -27,6 +28,10 @@ export class Post {
 
   @Column({ type: 'varchar' })
   chainTag: Chain;
+
+  @Column({ type: 'tsvector', nullable: true })
+  @Index({ type: 'gin' })
+  searchVector?: any;
 
   @Column({ default: 0 })
   upvotes: number;
