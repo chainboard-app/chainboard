@@ -21,6 +21,16 @@ export interface LeaderboardResponse {
   topEarners: LeaderboardEntry[];
 }
 
+export interface TipHistoryItem {
+  id: string;
+  amount: number;
+  chain: string;
+  sender: { id: string; displayName: string; username: string; avatarUrl?: string };
+  receiver: { id: string; displayName: string; username: string; avatarUrl?: string };
+  createdAt: Date;
+  postId?: string;
+}
+
 @Injectable()
 export class TipsService {
   constructor(
@@ -106,5 +116,33 @@ export class TipsService {
     await this.cacheManager.set(cacheKey, result, 60000); // 1 minute cache
 
     return result;
+  }
+
+  async getHistory(userId: string): Promise<TipHistoryItem[]> {
+    const tips = await this.tipsRepository.find({
+      where: [{ senderId: userId }, { receiverId: userId }],
+      relations: ['sender', 'receiver'],
+      order: { createdAt: 'DESC' },
+    });
+
+    return tips.map((tip) => ({
+      id: tip.id,
+      amount: Number(tip.amount),
+      chain: tip.chain,
+      sender: {
+        id: tip.sender.id,
+        displayName: tip.sender.displayName,
+        username: tip.sender.username,
+        avatarUrl: tip.sender.avatarUrl,
+      },
+      receiver: {
+        id: tip.receiver.id,
+        displayName: tip.receiver.displayName,
+        username: tip.receiver.username,
+        avatarUrl: tip.receiver.avatarUrl,
+      },
+      createdAt: tip.createdAt,
+      postId: tip.postId,
+    }));
   }
 }

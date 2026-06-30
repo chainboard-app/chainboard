@@ -89,3 +89,13 @@ export interface LeaderboardResponse {
 
 export type TimeWindow = '7d' | '30d' | 'all';
 
+export interface TipHistoryItem {
+  id: string;
+  amount: number;
+  chain: Chain;
+  sender: Pick<UserProfile, 'id' | 'displayName' | 'username' | 'avatarUrl'>;
+  receiver: Pick<UserProfile, 'id' | 'displayName' | 'username' | 'avatarUrl'>;
+  createdAt: string;
+  postId?: string;
+}
+

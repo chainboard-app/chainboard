@@ -6,6 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import type { Chain } from '../../common/types';
 import { User } from '../../users/entities/user.entity';
 import { Post } from '../../posts/entities/post.entity';
 
@@ -37,6 +38,9 @@ export class Tip {
 
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   amount: number;
+
+  @Column({ type: 'varchar' })
+  chain: Chain;
 
   @CreateDateColumn()
   createdAt: Date;
