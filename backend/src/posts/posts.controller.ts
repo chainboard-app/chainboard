@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Post, Param, Body, Delete } from '@nestjs/common';
+import { Controller, Get, Query, Post, Param, Body, Delete, Patch } from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { Post as PostEntity } from './entities/post.entity';
 import { Reaction, ReactionType } from './entities/reaction.entity';
@@ -10,6 +10,11 @@ export class PostsController {
   @Get('search')
   search(@Query('q') query: string): Promise<PostEntity[]> {
     return this.postsService.search(query);
+  }
+
+  @Get('trending')
+  getTrending(): Promise<PostEntity[]> {
+    return this.postsService.getTrending();
   }
 
   @Get(':id/reactions')
@@ -31,5 +36,13 @@ export class PostsController {
     @Body() body: { userId: string; type: ReactionType },
   ): Promise<void> {
     return this.postsService.removeReaction(id, body.userId, body.type);
+  }
+
+  @Patch(':id/pin')
+  togglePin(
+    @Param('id') id: string,
+    @Body() body: { userId: string }
+  ): Promise<PostEntity> {
+    return this.postsService.togglePin(id, body.userId);
   }
 }

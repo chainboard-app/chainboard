@@ -53,6 +53,8 @@ export interface Post {
   status: PostStatus;
   hasUpvoted?: boolean;
   community?: Community;
+  isPinned?: boolean;
+  pinnedAt?: string;
 }
 
 export type GatingType = 'token' | 'nft';

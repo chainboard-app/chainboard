@@ -5,6 +5,7 @@ import { Avatar } from '../Avatar';
 
 interface PostCardProps {
   post: Post;
+  isAuthor?: boolean; // whether current user is author
 }
 
 type ReactionType = 'fire' | 'build' | 'handshake';
@@ -25,7 +26,7 @@ function formatNumber(n: number): string {
   return `${n}`;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) => {
   const [upvoted, setUpvoted] = useState(post.hasUpvoted ?? false);
   const [upvoteCount, setUpvoteCount] = useState(post.upvotes);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -35,6 +36,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     build: 0,
     handshake: 0,
   });
+  const [isPinned, setIsPinned] = useState(post.isPinned ?? false);
   const chain = CHAIN_CONFIG[post.chainTag];
 
   const handleUpvote = () => {
@@ -59,6 +61,19 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     setUserReactions(newSet);
   };
 
+  const handleTogglePin = async () => {
+    try {
+      await fetch(`/api/posts/${post.id}/pin`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: post.author.id }),
+      });
+      setIsPinned(!isPinned);
+    } catch (err) {
+      console.error('Failed to toggle pin', err);
+    }
+  };
+
   const totalReactions = Object.values(reactionCounts).reduce((sum, val) => sum + val, 0);
 
   return (
@@ -66,8 +81,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       id={`post-${post.id}`}
       className="post-card"
       style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
+        background: isPinned ? 'rgba(123, 97, 255, 0.08)' : 'rgba(255,255,255,0.03)',
+        border: isPinned ? '1px solid rgba(123, 97, 255, 0.3)' : '1px solid rgba(255,255,255,0.07)',
         borderRadius: 16,
         padding: '20px 24px',
         display: 'flex',
@@ -78,44 +93,66 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Avatar user={post.author} size="sm" />
           <div style={{ lineHeight: 1.3 }}>
-            <span style={{ fontWeight: 600, fontSize: 14, color: '#F1F5F9' }>
-              {post.author.displayName}
-            </span>
-            {post.author.isVerified && (
-              <span
-                title="Verified"
-                style={{ marginLeft: 4, color: '#7B61FF', fontSize: 12 }}
-              >
-                ✓
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontWeight: 600, fontSize: 14, color: '#F1F5F9' }}>
+                {post.author.displayName}
               </span>
-            )}
-            <div style={{ fontSize: 12, color: '#64748B' }>
+              {isPinned && <span style={{ fontSize: 12, color: '#7B61FF' }}>📌</span>}
+              {post.author.isVerified && (
+                <span
+                  title="Verified"
+                  style={{ color: '#7B61FF', fontSize: 12 }}
+                >
+                  ✓
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: '#64748B' }}>
               @{post.author.username} · {formatDate(post.createdAt)}
             </div>
           </div>
         </div>
 
-        {/* Chain Badge */}
-        <span
-          style={{
-            background: chain.bg,
-            color: chain.color,
-            fontSize: 11,
-            fontWeight: 600,
-            padding: '4px 10px',
-            borderRadius: 99,
-            border: `1px solid ${chain.color}30`,
-            letterSpacing: '0.3px',
-            textTransform: 'uppercase',
-            flexShrink: 0,
-          }}
-        >
-          {chain.icon} {chain.label}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Chain Badge */}
+          <span
+            style={{
+              background: chain.bg,
+              color: chain.color,
+              fontSize: 11,
+              fontWeight: 600,
+              padding: '4px 10px',
+              borderRadius: 99,
+              border: `1px solid ${chain.color}30`,
+              letterSpacing: '0.3px',
+              textTransform: 'uppercase',
+              flexShrink: 0,
+            }}
+          >
+            {chain.icon} {chain.label}
+          </span>
+          {/* Pin Button (Author Only) */}
+          {isAuthor && (
+            <button
+              onClick={handleTogglePin}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: 'none',
+                borderRadius: 8,
+                padding: 6,
+                cursor: 'pointer',
+                color: isPinned ? '#7B61FF' : '#64748B',
+              }}
+              title={isPinned ? 'Unpin Post' : 'Pin Post'}
+            >
+              📌
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content */}
