@@ -45,4 +45,14 @@ export class PostsController {
   ): Promise<PostEntity> {
     return this.postsService.togglePin(id, body.userId);
   }
+
+  @Post(':id/impressions')
+  incrementImpressions(@Param('id') id: string): Promise<PostEntity> {
+    return this.postsService.incrementImpressions(id);
+  }
+
+  @Get('analytics/:userId')
+  getAnalytics(@Param('userId') userId: string) {
+    return this.postsService.getAnalytics(userId);
+  }
 }
