@@ -39,6 +39,9 @@ export class Tip {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   amount: number;
 
+  @Column({ type: 'jsonb', nullable: true })
+  splitTips?: Array<{ userId: string; amount: number }>;
+
   @Column({ type: 'varchar' })
   chain: Chain;
 
