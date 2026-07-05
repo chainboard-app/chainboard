@@ -49,6 +49,9 @@ export class Post {
   @Column({ default: 0 })
   upvotes: number;
 
+  @Column({ default: 0 })
+  impressions: number;
+
   @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
   tipsReceived: number;
 
@@ -59,7 +62,10 @@ export class Post {
   createdAt: Date;
 
   @Column({ default: 'active' })
-  status: 'active' | 'deleted';
+  status: 'active' | 'deleted' | 'scheduled';
+
+  @Column({ type: 'timestamp', nullable: true })
+  scheduledAt: Date | null;
 
   @Column({ default: false })
   isPinned: boolean;

@@ -18,6 +18,9 @@ export function PostComposer() {
   const [mentionUsers, setMentionUsers] = useState<User[]>([]);
   const [mentionStart, setMentionStart] = useState<number>(-1);
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mentionDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -315,27 +318,73 @@ export function PostComposer() {
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-          <span style={{ fontSize: 12, color: draftStatus === 'saved' ? '#10B981' : draftStatus === 'saving' ? '#F59E0B' : '#64748B' }}>
-            {draftStatus === 'saved' && '✓ Draft saved'}
-            {draftStatus === 'saving' && 'Saving draft...'}
-            {draftStatus === 'idle' && ''}
-          </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 12, color: draftStatus === 'saved' ? '#10B981' : draftStatus === 'saving' ? '#F59E0B' : '#64748B' }}>
+              {draftStatus === 'saved' && '✓ Draft saved'}
+              {draftStatus === 'saving' && 'Saving draft...'}
+              {draftStatus === 'idle' && ''}
+            </span>
+            <button
+              onClick={() => setIsScheduling(!isScheduling)}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 8,
+                border: '1px solid rgba(255,255,255,0.2)',
+                background: isScheduling ? 'rgba(123, 97, 255, 0.2)' : 'transparent',
+                color: isScheduling ? '#7B61FF' : '#94A3B8',
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              Schedule
+            </button>
+            {isScheduling && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="date"
+                  value={scheduledDate}
+                  onChange={(e) => setScheduledDate(e.target.value)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'transparent',
+                    color: '#E2E8F0',
+                    fontSize: 13,
+                  }}
+                />
+                <input
+                  type="time"
+                  value={scheduledTime}
+                  onChange={(e) => setScheduledTime(e.target.value)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'transparent',
+                    color: '#E2E8F0',
+                    fontSize: 13,
+                  }}
+                />
+              </div>
+            )}
+          </div>
           <button
             onClick={handleSubmit}
-            disabled={!content.trim()}
+            disabled={!content.trim() || (isScheduling && (!scheduledDate || !scheduledTime))}
             style={{
               padding: '8px 20px',
               borderRadius: 999,
               border: 'none',
-              background: content.trim() ? '#7B61FF' : 'rgba(255,255,255,0.1)',
-              color: content.trim() ? 'white' : 'rgba(255,255,255,0.5)',
+              background: content.trim() && (!isScheduling || (scheduledDate && scheduledTime)) ? '#7B61FF' : 'rgba(255,255,255,0.1)',
+              color: content.trim() && (!isScheduling || (scheduledDate && scheduledTime)) ? 'white' : 'rgba(255,255,255,0.5)',
               fontSize: 14,
               fontWeight: 600,
-              cursor: content.trim() ? 'pointer' : 'not-allowed',
+              cursor: content.trim() && (!isScheduling || (scheduledDate && scheduledTime)) ? 'pointer' : 'not-allowed',
             }}
           >
-            Post
+            {isScheduling ? 'Schedule' : 'Post'}
           </button>
         </div>
       </div>
