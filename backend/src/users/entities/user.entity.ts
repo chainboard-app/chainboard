@@ -13,6 +13,7 @@ import {
 } from '../../common/types';
 import { Post } from '../../posts/entities/post.entity';
 import { Tip } from '../../tips/entities/tip.entity';
+import { Follow } from '../../follows/entities/follow.entity';
 
 @Entity('users')
 export class User {
@@ -66,4 +67,10 @@ export class User {
 
   @OneToMany(() => Tip, (tip) => tip.receiver)
   tipsReceived: Tip[];
+
+  @OneToMany(() => Follow, (follow) => follow.follower)
+  followers: Follow[];
+
+  @OneToMany(() => Follow, (follow) => follow.following)
+  following: Follow[];
 }
