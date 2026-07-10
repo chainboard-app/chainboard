@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Report } from './entities/report.entity';
+import { Report, ReportReason } from './entities/report.entity';
 import { Post } from '../posts/entities/post.entity';
 
 @Injectable()
@@ -13,7 +13,7 @@ export class ModerationService {
     private postsRepository: Repository<Post>,
   ) {}
 
-  async reportPost(postId: string, reporterId: string, reason: string) {
+  async reportPost(postId: string, reporterId: string, reason: ReportReason) {
     const post = await this.postsRepository.findOneBy({ id: postId });
     if (!post) {
       throw new Error('Post not found');
