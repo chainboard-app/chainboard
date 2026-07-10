@@ -11,12 +11,19 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { TipsModule } from './tips/tips.module';
 import { MessagesModule } from './messages/messages.module';
 import { ModerationModule } from './moderation/moderation.module';
+import { FollowsModule } from './follows/follows.module';
+import { NftsModule } from './nfts/nfts.module';
+import { SeriesModule } from './series/series.module';
+import { WalletActivityModule } from './wallet-activity/wallet-activity.module';
 import { User } from './users/entities/user.entity';
 import { Post } from './posts/entities/post.entity';
 import { Tip } from './tips/entities/tip.entity';
 import { Community } from './communities/entities/community.entity';
 import { Message } from './messages/entities/message.entity';
 import { Report } from './moderation/entities/report.entity';
+import { Follow } from './follows/entities/follow.entity';
+import { PostCoAuthor } from './posts/entities/post-co-author.entity';
+import { Series } from './series/entities/series.entity';
 
 @Module({
   imports: [
@@ -28,7 +35,7 @@ import { Report } from './moderation/entities/report.entity';
       username: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'chainboard',
-      entities: [User, Post, Tip, Community, Message, Report],
+      entities: [User, Post, Tip, Community, Message, Report, Follow, PostCoAuthor, Series],
       synchronize: true,
     }),
     UsersModule,
@@ -39,6 +46,10 @@ import { Report } from './moderation/entities/report.entity';
     TipsModule,
     MessagesModule,
     ModerationModule,
+    FollowsModule,
+    NftsModule,
+    SeriesModule,
+    WalletActivityModule,
   ],
   controllers: [AppController],
   providers: [AppService],
