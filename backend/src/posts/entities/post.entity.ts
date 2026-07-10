@@ -6,10 +6,13 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 import type { Chain } from '../../common/types';
 import { User } from '../../users/entities/user.entity';
 import { Community } from '../../communities/entities/community.entity';
+import { PostCoAuthor } from './post-co-author.entity';
+import { Series } from '../../series/entities/series.entity';
 
 export interface Mention {
   userId: string;
@@ -30,6 +33,9 @@ export class Post {
   @Column()
   authorId: string;
 
+  @OneToMany(() => PostCoAuthor, (coAuthor) => coAuthor.post)
+  coAuthors: PostCoAuthor[];
+
   @Column('text')
   content: string;
 
@@ -37,7 +43,7 @@ export class Post {
   chainTag: Chain;
 
   @Column({ type: 'tsvector', nullable: true })
-  @Index({ type: 'gin' })
+  @Index('idx_post_search_vector', { type: 'gin' })
   searchVector?: any;
 
   @Column({ type: 'jsonb', default: [] })
@@ -81,4 +87,14 @@ export class Post {
 
   @Column({ nullable: true })
   communityId?: string;
+
+  @ManyToOne(() => Series, (series) => series.posts, { nullable: true })
+  @JoinColumn({ name: 'seriesId' })
+  series?: Series;
+
+  @Column({ nullable: true })
+  seriesId?: string;
+
+  @Column({ default: 0 })
+  seriesOrder: number;
 }
