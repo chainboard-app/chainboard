@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -27,16 +31,29 @@ import { Series } from './series/entities/series.entity';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432', 10),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'chainboard',
-      entities: [User, Post, Tip, Community, Message, Report, Follow, PostCoAuthor, Series],
-      synchronize: true,
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 300, // 5 minutes
+      max: 100,
+    }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000, // 1 minute
+      limit: 100,
+    }]),
+    TypeOrmModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get('DB_HOST') || 'localhost',
+        port: parseInt(configService.get('DB_PORT') || '5432', 10),
+        username: configService.get('DB_USER') || 'postgres',
+        password: configService.get('DB_PASSWORD') || 'postgres',
+        database: configService.get('DB_NAME') || 'chainboard',
+        entities: [User, Post, Tip, Community, Message, Report, Follow, PostCoAuthor, Series],
+        synchronize: configService.get('NODE_ENV') !== 'production',
+      }),
+      inject: [ConfigService],
     }),
     UsersModule,
     PostsModule,
@@ -52,6 +69,12 @@ import { Series } from './series/entities/series.entity';
     WalletActivityModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
