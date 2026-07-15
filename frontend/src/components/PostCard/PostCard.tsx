@@ -5,7 +5,7 @@ import { Avatar } from '../Avatar';
 
 interface PostCardProps {
   post: Post;
-  isAuthor?: boolean; // whether current user is author
+  isAuthor?: boolean;
 }
 
 type ReactionType = 'fire' | 'build' | 'handshake';
@@ -37,6 +37,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
     handshake: 0,
   });
   const [isPinned, setIsPinned] = useState(post.isPinned ?? false);
+  const [isTogglingPin, setIsTogglingPin] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
   const chain = CHAIN_CONFIG[post.chainTag];
 
   const handleUpvote = () => {
@@ -62,15 +64,20 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
   };
 
   const handleTogglePin = async () => {
+    setIsTogglingPin(true);
+    setPinError(null);
     try {
-      await fetch(`/api/posts/${post.id}/pin`, {
+      const response = await fetch(`/api/posts/${post.id}/pin`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: post.author.id }),
       });
+      if (!response.ok) throw new Error('Failed to toggle pin');
       setIsPinned(!isPinned);
     } catch (err) {
-      console.error('Failed to toggle pin', err);
+      setPinError(err instanceof Error ? err.message : 'Failed to toggle pin');
+    } finally {
+      setIsTogglingPin(false);
     }
   };
 
@@ -79,115 +86,72 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
   return (
     <article
       id={`post-${post.id}`}
-      className="post-card"
-      style={{
-        background: isPinned ? 'rgba(123, 97, 255, 0.08)' : 'rgba(255,255,255,0.03)',
-        border: isPinned ? '1px solid rgba(123, 97, 255, 0.3)' : '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 16,
-        padding: '20px 24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 16,
-        transition: 'border-color 0.2s, background 0.2s',
-        cursor: 'default',
-      }}
+      className={`post-card rounded-2xl p-5 flex flex-col gap-4 transition-colors cursor-default ${
+        isPinned 
+          ? 'bg-purple-500/10 border border-purple-500/30' 
+          : 'bg-white/[0.03] border border-white/[0.07]'
+      }`}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="flex items-center gap-3 justify-between">
+        <div className="flex items-center gap-2.5">
           <Avatar user={post.author} size="sm" />
-          <div style={{ lineHeight: 1.3 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontWeight: 600, fontSize: 14, color: '#F1F5F9' }}>
+          <div className="leading-tight">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold text-sm text-slate-100">
                 {post.author.displayName}
               </span>
-              {isPinned && <span style={{ fontSize: 12, color: '#7B61FF' }}>📌</span>}
+              {isPinned && <span className="text-xs text-purple-400">📌</span>}
               {post.author.isVerified && (
-                <span
-                  title="Verified"
-                  style={{ color: '#7B61FF', fontSize: 12 }}
-                >
-                  ✓
-                </span>
+                <span className="text-purple-400 text-xs">✓</span>
               )}
             </div>
-            <div style={{ fontSize: 12, color: '#64748B' }}>
+            <div className="text-xs text-slate-400">
               @{post.author.username} · {formatDate(post.createdAt)}
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Chain Badge */}
+        <div className="flex items-center gap-2">
           <span
+            className="text-[11px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wide shrink-0"
             style={{
               background: chain.bg,
               color: chain.color,
-              fontSize: 11,
-              fontWeight: 600,
-              padding: '4px 10px',
-              borderRadius: 99,
               border: `1px solid ${chain.color}30`,
-              letterSpacing: '0.3px',
-              textTransform: 'uppercase',
-              flexShrink: 0,
             }}
           >
             {chain.icon} {chain.label}
           </span>
-          {/* Pin Button (Author Only) */}
           {isAuthor && (
             <button
               onClick={handleTogglePin}
-              style={{
-                background: 'rgba(255,255,255,0.05)',
-                border: 'none',
-                borderRadius: 8,
-                padding: 6,
-                cursor: 'pointer',
-                color: isPinned ? '#7B61FF' : '#64748B',
-              }}
+              disabled={isTogglingPin}
+              className="bg-white/5 border-none rounded-lg p-1.5 cursor-pointer text-purple-400 disabled:opacity-50"
               title={isPinned ? 'Unpin Post' : 'Pin Post'}
             >
-              📌
+              {isTogglingPin ? '⏳' : '📌'}
             </button>
           )}
         </div>
       </div>
 
-      {/* Content */}
-      <p
-        style={{
-          margin: 0,
-          fontSize: 15,
-          lineHeight: 1.65,
-          color: '#CBD5E1',
-        }}
-      >
+      <p className="m-0 text-sm leading-relaxed text-slate-300">
         {post.content}
       </p>
 
-      {/* Reactions */}
+      {pinError && (
+        <div className="text-red-400 text-xs">{pinError}</div>
+      )}
+
       {totalReactions > 0 && (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="flex gap-2 items-center">
           {REACTIONS.filter(r => reactionCounts[r.type] > 0).map(reaction => (
             <button
               key={reaction.type}
               onClick={() => handleToggleReaction(reaction.type)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                background: userReactions.has(reaction.type) ? 'rgba(123, 97, 255, 0.15)' : 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 999,
-                padding: '4px 10px',
-                cursor: 'pointer',
-                color: '#E2E8F0',
-                fontSize: 13,
-                fontWeight: 500,
-                transition: 'all 0.2s',
-              }}
+              className={`flex items-center gap-1 rounded-full px-2.5 py-1 border border-white/10 cursor-pointer text-slate-200 text-sm font-medium transition-all ${
+                userReactions.has(reaction.type) ? 'bg-purple-500/15' : 'bg-white/[0.04]'
+              }`}
             >
               {reaction.emoji}
               {reactionCounts[reaction.type]}
@@ -196,34 +160,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
         </div>
       )}
 
-      {/* Actions */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 24,
-          alignItems: 'center',
-          paddingTop: 4,
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          position: 'relative',
-        }}
-      >
-        {/* Reaction Picker */}
-        <div style={{ position: 'relative' }}>
+      <div className="flex gap-6 items-center pt-1 border-t border-white/[0.05] relative">
+        <div className="relative">
           <button
             onClick={() => setShowReactionPicker(!showReactionPicker)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              color: '#64748B',
-              fontSize: 13,
-              fontWeight: 600,
-              padding: '4px 0',
-              transition: 'color 0.2s',
-            }}
+            className="bg-none border-none cursor-pointer flex items-center gap-1.5 text-slate-400 text-sm font-semibold py-1 transition-colors"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
               <circle cx="8" cy="12" r="1" />
@@ -235,19 +176,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
 
           {showReactionPicker && (
             <div
-              style={{
-                position: 'absolute',
-                bottom: '100%',
-                left: 0,
-                background: 'rgba(15, 23, 42, 0.98)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 12,
-                padding: 8,
-                display: 'flex',
-                gap: 4,
-                marginBottom: 8,
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-              }}
+              className="absolute bottom-full left-0 bg-slate-900/98 border border-white/10 rounded-xl p-2 flex gap-1 mb-2 shadow-xl"
             >
               {REACTIONS.map(reaction => (
                 <button
@@ -256,15 +185,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
                     handleToggleReaction(reaction.type);
                     setShowReactionPicker(false);
                   }}
-                  style={{
-                    background: userReactions.has(reaction.type) ? 'rgba(123, 97, 255, 0.2)' : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 20,
-                    padding: '6px 10px',
-                    borderRadius: 8,
-                    transition: 'all 0.2s',
-                  }}
+                  className={`text-lg px-2.5 py-1.5 rounded-lg border-none cursor-pointer transition-all ${
+                    userReactions.has(reaction.type) ? 'bg-purple-500/20' : 'bg-transparent'
+                  }`}
                 >
                   {reaction.emoji}
                 </button>
@@ -273,24 +196,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
           )}
         </div>
 
-        {/* Upvote */}
         <button
           id={`upvote-${post.id}`}
           onClick={handleUpvote}
           aria-pressed={upvoted}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            color: upvoted ? '#7B61FF' : '#64748B',
-            fontSize: 13,
-            fontWeight: 600,
-            padding: '4px 0',
-            transition: 'color 0.2s',
-          }}
+          className="bg-none border-none cursor-pointer flex items-center gap-1.5 text-sm font-semibold py-1 transition-colors"
+          style={{ color: upvoted ? '#7B61FF' : '#64748B' }}
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill={upvoted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.2">
             <path d="M12 19V6M5 12l7-7 7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -298,22 +209,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
           {formatNumber(upvoteCount)}
         </button>
 
-        {/* Comments */}
         <button
           id={`comment-${post.id}`}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            color: '#64748B',
-            fontSize: 13,
-            fontWeight: 600,
-            padding: '4px 0',
-            transition: 'color 0.2s',
-          }}
+          className="bg-none border-none cursor-pointer flex items-center gap-1.5 text-slate-400 text-sm font-semibold py-1 transition-colors"
         >
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
@@ -321,18 +219,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isAuthor = false }) =>
           {formatNumber(post.commentsCount)}
         </button>
 
-        {/* Tips */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            color: '#10B981',
-            fontSize: 13,
-            fontWeight: 600,
-            marginLeft: 'auto',
-          }}
-        >
+        <div className="flex items-center gap-1.5 text-emerald-400 text-sm font-semibold ml-auto">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
             <circle cx="12" cy="12" r="10" />
             <path d="M12 6v12M9 10h6M9 14h6" strokeLinecap="round" />
