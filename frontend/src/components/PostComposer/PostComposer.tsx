@@ -21,10 +21,12 @@ export function PostComposer() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fetchMentionsLoading, setFetchMentionsLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mentionDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Load draft on mount
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_KEY);
     if (savedDraft) {
@@ -32,7 +34,6 @@ export function PostComposer() {
     }
   }, []);
 
-  // Debounce save to localStorage
   useEffect(() => {
     if (!content.trim()) {
       localStorage.removeItem(DRAFT_KEY);
@@ -49,7 +50,6 @@ export function PostComposer() {
     return () => clearTimeout(timeoutId);
   }, [content]);
 
-  // Fetch users for mentions
   useEffect(() => {
     if (!mentionQuery) {
       setMentionUsers([]);
@@ -57,6 +57,7 @@ export function PostComposer() {
     }
 
     const fetchUsers = async () => {
+      setFetchMentionsLoading(true);
       try {
         const res = await fetch(`/api/users/search?q=${encodeURIComponent(mentionQuery)}`);
         if (res.ok) {
@@ -66,13 +67,14 @@ export function PostComposer() {
         }
       } catch {
         // Ignore errors for mock
+      } finally {
+        setFetchMentionsLoading(false);
       }
     };
 
     fetchUsers();
   }, [mentionQuery]);
 
-  // Handle click outside to close dropdown
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (
@@ -102,14 +104,23 @@ export function PostComposer() {
     setShowDraftPrompt(false);
   }, []);
 
-  const handleSubmit = useCallback(() => {
+  const handleSubmit = useCallback(async () => {
     if (!content.trim()) return;
-    // TODO: implement actual submit
-    console.log('Post submitted:', content);
-    localStorage.removeItem(DRAFT_KEY);
-    setContent('');
-    setDraftStatus('idle');
-  }, [content]);
+    if (isScheduling && (!scheduledDate || !scheduledTime)) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      console.log('Post submitted:', content);
+      localStorage.removeItem(DRAFT_KEY);
+      setContent('');
+      setDraftStatus('idle');
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to submit post');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [content, isScheduling, scheduledDate, scheduledTime]);
 
   const handleTextareaChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -117,7 +128,6 @@ export function PostComposer() {
       const cursorPos = e.target.selectionStart;
       setContent(newContent);
 
-      // Detect mention
       const textBeforeCursor = newContent.slice(0, cursorPos);
       const lastSpaceOrStart = Math.max(
         textBeforeCursor.lastIndexOf(' '),
@@ -146,7 +156,6 @@ export function PostComposer() {
     setMentionQuery(null);
     setMentionUsers([]);
 
-    // Set cursor position
     setTimeout(() => {
       if (textareaRef.current) {
         const newCursor = newText.length;
@@ -180,59 +189,27 @@ export function PostComposer() {
   );
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       <div
-        style={{
-          background: 'rgba(255,255,255,0.03)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: 16,
-          padding: 20,
-          marginBottom: 24,
-        }}
+        className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-5 mb-6"
       >
         {showDraftPrompt && (
           <div
-            style={{
-              background: 'rgba(123, 97, 255, 0.1)',
-              border: '1px solid rgba(123, 97, 255, 0.3)',
-              borderRadius: 8,
-              padding: 12,
-              marginBottom: 16,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-            }}
+            className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 mb-4 flex justify-between items-center gap-3"
           >
-            <span style={{ color: '#E2E8F0', fontSize: 14 }}>
+            <span className="text-slate-200 text-sm">
               You have an unfinished draft
             </span>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div className="flex gap-2">
               <button
                 onClick={handleDiscardDraft}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  background: 'transparent',
-                  color: '#94A3B8',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
+                className="px-3 py-1.5 rounded-md border border-white/20 bg-transparent text-slate-400 text-sm cursor-pointer"
               >
                 Discard
               </button>
               <button
                 onClick={handleContinueDraft}
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  border: 'none',
-                  background: '#7B61FF',
-                  color: 'white',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
+                className="px-3 py-1.5 rounded-md border-none bg-purple-500 text-white text-sm cursor-pointer"
               >
                 Continue draft
               </button>
@@ -246,145 +223,86 @@ export function PostComposer() {
           onChange={handleTextareaChange}
           onKeyDown={handleKeyDown}
           placeholder="What's on your mind? @mention someone!"
-          style={{
-            width: '100%',
-            minHeight: 100,
-            background: 'transparent',
-            border: 'none',
-            color: '#CBD5E1',
-            fontSize: 15,
-            resize: 'vertical',
-            outline: 'none',
-          }}
+          className="w-full min-h-[100px] bg-transparent border-none text-slate-300 text-sm resize-y outline-none"
         />
 
-        {/* Mention Dropdown */}
-        {mentionQuery && mentionUsers.length > 0 && (
+        {mentionQuery && (
           <div
             ref={mentionDropdownRef}
-            style={{
-              position: 'absolute',
-              bottom: '100%',
-              left: 0,
-              right: 0,
-              background: '#1E293B',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 12,
-              padding: 8,
-              marginBottom: 8,
-              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-              maxHeight: 250,
-              overflowY: 'auto',
-            }}
+            className="absolute bottom-full left-0 right-0 bg-slate-800 border border-white/10 rounded-xl p-2 mb-2 shadow-xl max-h-[250px] overflow-y-auto"
           >
-            {mentionUsers.map((user, index) => (
-              <button
-                key={user.id}
-                onClick={() => handleMentionSelect(user)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: 10,
-                  borderRadius: 8,
-                  background: index === mentionIndex ? 'rgba(123, 97, 255, 0.2)' : 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  color: '#E2E8F0',
-                }}
-              >
-                <div style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: '#7B61FF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 14
-                }}>
-                  {user.displayName[0].toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{user.displayName}</div>
-                  <div style={{ fontSize: 12, color: '#94A3B8' }}>@{user.username}</div>
-                </div>
-              </button>
-            ))}
+            {fetchMentionsLoading ? (
+              <div className="text-slate-400 text-sm p-2">Loading...</div>
+            ) : mentionUsers.length > 0 ? (
+              mentionUsers.map((user, index) => (
+                <button
+                  key={user.id}
+                  onClick={() => handleMentionSelect(user)}
+                  className={`w-full flex items-center gap-3 p-2.5 rounded-lg border-none cursor-pointer text-left text-slate-200 ${
+                    index === mentionIndex ? 'bg-purple-500/20' : 'bg-transparent'
+                  }`}
+                >
+                  <div className="w-9 h-9 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                    {user.displayName[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-semibold text-sm">{user.displayName}</div>
+                    <div className="text-xs text-slate-400">@{user.username}</div>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="text-slate-400 text-sm p-2">No users found</div>
+            )}
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontSize: 12, color: draftStatus === 'saved' ? '#10B981' : draftStatus === 'saving' ? '#F59E0B' : '#64748B' }}>
+        {submitError && (
+          <div className="text-red-400 text-sm mt-2">{submitError}</div>
+        )}
+
+        <div className="flex justify-between items-center mt-3 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs" style={{ color: draftStatus === 'saved' ? '#10B981' : draftStatus === 'saving' ? '#F59E0B' : '#64748B' }}>
               {draftStatus === 'saved' && '✓ Draft saved'}
               {draftStatus === 'saving' && 'Saving draft...'}
               {draftStatus === 'idle' && ''}
             </span>
             <button
               onClick={() => setIsScheduling(!isScheduling)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: isScheduling ? 'rgba(123, 97, 255, 0.2)' : 'transparent',
-                color: isScheduling ? '#7B61FF' : '#94A3B8',
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
+              className={`px-3 py-1.5 rounded-lg border border-white/20 text-sm cursor-pointer transition-colors ${
+                isScheduling ? 'bg-purple-500/20 text-purple-400' : 'bg-transparent text-slate-400'
+              }`}
             >
               Schedule
             </button>
             {isScheduling && (
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="flex gap-2">
                 <input
                   type="date"
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    background: 'transparent',
-                    color: '#E2E8F0',
-                    fontSize: 13,
-                  }}
+                  className="px-2.5 py-1.5 rounded-md border border-white/20 bg-transparent text-slate-200 text-sm"
                 />
                 <input
                   type="time"
                   value={scheduledTime}
                   onChange={(e) => setScheduledTime(e.target.value)}
-                  style={{
-                    padding: '6px 10px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    background: 'transparent',
-                    color: '#E2E8F0',
-                    fontSize: 13,
-                  }}
+                  className="px-2.5 py-1.5 rounded-md border border-white/20 bg-transparent text-slate-200 text-sm"
                 />
               </div>
             )}
           </div>
           <button
             onClick={handleSubmit}
-            disabled={!content.trim() || (isScheduling && (!scheduledDate || !scheduledTime))}
-            style={{
-              padding: '8px 20px',
-              borderRadius: 999,
-              border: 'none',
-              background: content.trim() && (!isScheduling || (scheduledDate && scheduledTime)) ? '#7B61FF' : 'rgba(255,255,255,0.1)',
-              color: content.trim() && (!isScheduling || (scheduledDate && scheduledTime)) ? 'white' : 'rgba(255,255,255,0.5)',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: content.trim() && (!isScheduling || (scheduledDate && scheduledTime)) ? 'pointer' : 'not-allowed',
-            }}
+            disabled={!content.trim() || (isScheduling && (!scheduledDate || !scheduledTime)) || isSubmitting}
+            className={`px-5 py-2 rounded-full border-none text-sm font-semibold cursor-pointer transition-colors ${
+              content.trim() && (!isScheduling || (scheduledDate && scheduledTime)) && !isSubmitting
+                ? 'bg-purple-500 text-white'
+                : 'bg-white/10 text-white/50 cursor-not-allowed'
+            }`}
           >
-            {isScheduling ? 'Schedule' : 'Post'}
+            {isSubmitting ? 'Submitting...' : isScheduling ? 'Schedule' : 'Post'}
           </button>
         </div>
       </div>
