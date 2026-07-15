@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { Post } from './entities/post.entity';
 import { Reaction, ReactionType } from './entities/reaction.entity';
 import { Tip } from '../tips/entities/tip.entity';
@@ -17,6 +18,8 @@ export class PostsService {
     private tipsRepository: Repository<Tip>,
   ) {}
 
+  @CacheKey('search_posts')
+  @CacheTTL(60)
   async search(query: string): Promise<Post[]> {
     if (!query.trim()) {
       return [];
@@ -33,20 +36,23 @@ export class PostsService {
       .getMany();
   }
 
+  @CacheKey('trending_posts')
+  @CacheTTL(120)
   async getTrending(): Promise<Post[]> {
-    const posts = await this.postsRepository.find({ relations: ['author'] });
-    const now = new Date().getTime();
-    
-    const scoredPosts = posts.map(post => {
-      const hoursSinceCreated = (now - new Date(post.createdAt).getTime()) / (1000 * 60 * 60);
-      const hours = Math.max(hoursSinceCreated, 0.01);
-      const reactionCount = post.mentions.length;
-      const score = (post.upvotes + 2 * reactionCount + 3 * post.tipsReceived) / Math.pow(hours, 1.5);
-      return { post, score };
-    });
-
-    scoredPosts.sort((a, b) => b.score - a.score);
-    return scoredPosts.slice(0, 20).map(sp => sp.post);
+    const now = new Date();
+    return this.postsRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .select('post.*, author.*')
+      .addSelect(
+        `(post.upvotes + 2 * jsonb_array_length(post.mentions) + 3 * post.tipsReceived) / 
+        POWER(GREATEST(EXTRACT(EPOCH FROM (now() - post.createdAt)) / 3600, 0.01), 1.5)`,
+        'score',
+      )
+      .orderBy('score', 'DESC')
+      .limit(20)
+      .getRawMany()
+      .then(raw => raw.map(r => this.postsRepository.create(r)));
   }
 
   async getReactions(postId: string): Promise<{ [key in ReactionType]: number }> {
