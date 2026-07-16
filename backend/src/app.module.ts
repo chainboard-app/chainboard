@@ -28,10 +28,14 @@ import { Report } from './moderation/entities/report.entity';
 import { Follow } from './follows/entities/follow.entity';
 import { PostCoAuthor } from './posts/entities/post-co-author.entity';
 import { Series } from './series/entities/series.entity';
+import { validate } from './common/validation/env.validation';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate,
+    }),
     ScheduleModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
@@ -45,11 +49,7 @@ import { Series } from './series/entities/series.entity';
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST') || 'localhost',
-        port: parseInt(configService.get('DB_PORT') || '5432', 10),
-        username: configService.get('DB_USER') || 'postgres',
-        password: configService.get('DB_PASSWORD') || 'postgres',
-        database: configService.get('DB_NAME') || 'chainboard',
+        url: configService.get('DATABASE_URL'),
         entities: [User, Post, Tip, Community, Message, Report, Follow, PostCoAuthor, Series],
         synchronize: configService.get('NODE_ENV') !== 'production',
       }),
