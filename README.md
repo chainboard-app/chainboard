@@ -177,6 +177,127 @@ The following features are planned for upcoming releases:
 
 ---
 
+## ⭐ Stellar Integration
+
+ChainBoard provides comprehensive Stellar blockchain integration, enabling developers to interact with the Stellar network for tipping, NFT management, and smart contract interactions.
+
+### Features
+
+- **Account Management**: Create, fund, and manage Stellar accounts
+- **Transaction Operations**: Send payments, manage assets, and submit transactions
+- **Soroban Smart Contracts**: Deploy and invoke Soroban contracts
+- **Federation Support**: Resolve Stellar federation addresses (e.g., `user*stellar.org`)
+- **Asset Management**: Handle custom assets and NFTs on Stellar
+- **Wallet Connection**: Seamless wallet integration for client-side signing
+- **Memo Support**: Full SEP-0005 memo standard implementation
+
+### API Endpoints
+
+#### Account Operations
+- `POST /stellar/keypair` - Generate a new Stellar keypair
+- `POST /stellar/fund/:publicKey` - Fund a testnet account (friendbot)
+- `GET /stellar/account/:publicKey` - Get account information
+- `GET /stellar/account/:publicKey/balances` - Get account balances
+- `GET /stellar/account/:publicKey/transactions` - Get transaction history
+
+#### Transactions
+- `POST /stellar/payment` - Create a payment transaction
+- `POST /stellar/transaction/submit` - Submit a signed transaction
+
+#### Assets & Federation
+- `GET /stellar/federation/:address` - Resolve a federation address
+- `GET /stellar/asset/:code/:issuer` - Get asset metadata
+
+#### Soroban Contracts
+- `POST /stellar/contract/deploy` - Deploy a Soroban contract
+- `POST /stellar/contract/invoke` - Invoke a contract method
+
+#### Network
+- `GET /stellar/network` - Get network information
+
+### Configuration
+
+Configure Stellar integration in your `.env` file:
+
+```env
+# Stellar Network Configuration
+STELLAR_NETWORK=testnet  # or 'mainnet'
+STELLAR_RPC_URL=https://soroban-testnet.stellar.org
+STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
+STELLAR_FRIENDBOT_URL=https://friendbot.stellar.org
+```
+
+### Usage Examples
+
+#### Create and Fund an Account
+
+```typescript
+// Generate keypair
+const { publicKey, secretKey } = await stellarService.createKeypair();
+
+// Fund on testnet
+await stellarService.fundTestnetAccount(publicKey);
+```
+
+#### Send a Payment
+
+```typescript
+// Create payment transaction
+const xdr = await stellarService.createPaymentTransaction({
+  fromSecret: 'S...',
+  toPublicKey: 'G...',
+  amount: '10',
+  assetCode: 'XLM',
+});
+
+// Submit transaction
+const result = await stellarService.submitTransaction(xdr);
+```
+
+#### Deploy a Soroban Contract
+
+```typescript
+const { contractId, transactionHash } = await stellarService.deployContract(
+  sourceSecret,
+  wasmBuffer,
+);
+```
+
+#### Resolve Federation Address
+
+```typescript
+const accountId = await stellarService.resolveFederationAddress('user*stellar.org');
+```
+
+### Stellar Standards Supported
+
+- **SEP-0005**: Memo format for transactions
+- **SEP-0001**: Stellar account requirements
+- **SEP-0002**: Federation protocol
+- **SEP-0024**: Soroban smart contract interface
+
+### Testing on Testnet
+
+ChainBoard defaults to Stellar testnet for development. Use the friendbot endpoint to fund test accounts:
+
+```bash
+curl -X POST http://localhost:4000/stellar/fund/GPUBLICKEY
+```
+
+### Mainnet Deployment
+
+For production, update your environment variables:
+
+```env
+STELLAR_NETWORK=mainnet
+STELLAR_RPC_URL=https://soroban.stellar.org
+STELLAR_HORIZON_URL=https://horizon.stellar.org
+```
+
+**Important**: Never expose secret keys on mainnet. Use proper key management and hardware wallets for production.
+
+---
+
 ## 🛠️ Troubleshooting
 
 ### Common Issues
