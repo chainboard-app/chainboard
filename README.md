@@ -177,6 +177,151 @@ The following features are planned for upcoming releases:
 
 ---
 
+## 🛠️ Troubleshooting
+
+### Common Issues
+
+#### Database Connection Errors
+
+**Problem**: `Connection refused` or `ECONNREFUSED` when starting the backend
+
+**Solutions**:
+- Ensure PostgreSQL is running: `pg_isready` or check your PostgreSQL service
+- Verify `DATABASE_URL` in `.env` matches your PostgreSQL configuration
+- Check that the database exists: `createdb chainboard` if needed
+- Ensure the user in the connection string has proper permissions
+
+#### Port Already in Use
+
+**Problem**: `EADDRINUSE: address already in use :::3000` or `:::4000`
+
+**Solutions**:
+- Change the port in `.env` by setting `PORT=3001` (backend) or adjusting frontend port
+- Kill the process using the port:
+  - Windows: `netstat -ano | findstr :3000` then `taskkill /PID <PID> /F`
+  - Mac/Linux: `lsof -ti:3000 | xargs kill -9`
+
+#### Dependency Installation Issues
+
+**Problem**: `pnpm install` fails with peer dependency warnings
+
+**Solutions**:
+- Run `pnpm install --force` to bypass peer dependency checks
+- Update Node.js to version 20 or higher
+- Clear pnpm cache: `pnpm store prune`
+
+#### Build Errors
+
+**Problem**: TypeScript compilation errors or build failures
+
+**Solutions**:
+- Ensure all dependencies are installed: `pnpm install`
+- Check TypeScript version compatibility in `tsconfig.json`
+- Run `pnpm run lint` to identify specific issues
+- Clear build artifacts: `rm -rf backend/dist frontend/dist`
+
+#### Wallet Connection Issues
+
+**Problem**: Freighter/MetaMask wallet not connecting
+
+**Solutions**:
+- Ensure wallet extension is installed and unlocked
+- Check that you're on the correct network (testnet for development)
+- Clear browser cache and try again
+- Check browser console for specific error messages
+
+#### CORS Errors
+
+**Problem**: Browser shows CORS policy errors in console
+
+**Solutions**:
+- Add your frontend URL to `ALLOWED_ORIGINS` in `.env`
+- Ensure backend CORS configuration includes your domain
+- Check that the backend is running and accessible
+
+### Performance Issues
+
+#### Slow Database Queries
+
+**Solutions**:
+- Check database connection pool settings in `app.module.ts`
+- Run `ANALYZE` on your PostgreSQL database
+- Add indexes to frequently queried columns
+- Monitor slow queries with PostgreSQL logging
+
+#### High Memory Usage
+
+**Solutions**:
+- Adjust `DB_POOL_MAX` and `DB_POOL_SIZE` in environment variables
+- Check for memory leaks in custom services
+- Monitor with the `/metrics` endpoint
+- Restart services periodically if needed
+
+### Development Issues
+
+#### Hot Module Replacement Not Working
+
+**Solutions**:
+- Ensure you're running `pnpm run dev` (not `pnpm run build`)
+- Check that file watchers are working on your OS
+- Try restarting the development server
+- Check Vite configuration in `vite.config.ts`
+
+#### Environment Variables Not Loading
+
+**Solutions**:
+- Ensure `.env` file exists in the project root
+- Verify variable names match those in `.env.example`
+- Restart the server after changing `.env`
+- Check for typos in variable names
+
+### Testing Issues
+
+#### Tests Failing in CI but Not Locally
+
+**Solutions**:
+- Ensure database migrations are run in CI
+- Check that test environment variables are set
+- Verify time zone settings match between environments
+- Check for race conditions in async tests
+
+#### Coverage Reports Missing
+
+**Solutions**:
+- Ensure Jest is configured for coverage in `jest.config.js`
+- Run tests with coverage: `pnpm run test:cov`
+- Check that coverage directory is not in `.gitignore`
+
+### Docker Issues
+
+#### Container Won't Start
+
+**Solutions**:
+- Check Docker logs: `docker logs <container_id>`
+- Ensure all required environment variables are set
+- Verify network connectivity between containers
+- Check that ports are not already in use
+
+#### Build Fails in Docker
+
+**Solutions**:
+- Ensure Dockerfile uses correct Node.js version
+- Check that `pnpm-lock.yaml` is committed
+- Verify all dependencies are in `package.json`
+- Try building with `--no-cache` flag
+
+### Getting Help
+
+If you encounter issues not covered here:
+
+1. **Check the logs**: Backend logs are in `logs/` directory, frontend logs in browser console
+2. **Search GitHub Issues**: Check if others have encountered similar issues
+3. **Create a minimal reproduction**: Simplify your setup to isolate the problem
+4. **Provide context**: Include error messages, environment details, and steps to reproduce
+5. **Join the community**: Ask for help in Discord (coming soon)
+
+---
+
 ## 🤝 Contributing
 
 ChainBoard is built in the open, for the community. All contributions are welcome — from bug fixes and documentation improvements to new features and chain integrations.
