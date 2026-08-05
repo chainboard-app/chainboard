@@ -4,7 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -29,6 +29,8 @@ import { Follow } from './follows/entities/follow.entity';
 import { PostCoAuthor } from './posts/entities/post-co-author.entity';
 import { Series } from './series/entities/series.entity';
 import { validate } from './common/validation/env.validation';
+import { XssSanitizerInterceptor } from './common/guards/xss.guard';
+import { WinstonLogger } from './common/logger/winston.logger';
 
 @Module({
   imports: [
@@ -52,6 +54,13 @@ import { validate } from './common/validation/env.validation';
         url: configService.get('DATABASE_URL'),
         entities: [User, Post, Tip, Community, Message, Report, Follow, PostCoAuthor, Series],
         synchronize: configService.get('NODE_ENV') !== 'production',
+        poolSize: configService.get('DB_POOL_SIZE', 10),
+        extra: {
+          max: configService.get('DB_POOL_MAX', 20),
+          idleTimeoutMillis: configService.get('DB_IDLE_TIMEOUT', 30000),
+          connectionTimeoutMillis: configService.get('DB_CONNECTION_TIMEOUT', 2000),
+        },
+        logging: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
     }),
@@ -74,6 +83,14 @@ import { validate } from './common/validation/env.validation';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: XssSanitizerInterceptor,
+    },
+    {
+      provide: 'APP_LOGGER',
+      useClass: WinstonLogger,
     },
   ],
 })
