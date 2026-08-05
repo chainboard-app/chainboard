@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { StellarExceptionFilter } from './common/filters/stellar-exception.filter';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { PerformanceMiddleware } from './common/middleware/performance.middleware';
@@ -41,23 +42,29 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  
+
   // Global middleware
   app.use(RequestIdMiddleware);
   app.use(LoggingMiddleware);
   app.use(PerformanceMiddleware);
-  
-  app.useGlobalPipes(new ValidationPipe({ 
-    whitelist: true, 
-    transform: true,
-    forbidNonWhitelisted: true,
-    transformOptions: {
-      enableImplicitConversion: true,
-    },
-  }));
-  app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Swagger/OpenAPI documentation
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
+  // Global exception filters
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new StellarExceptionFilter());
+
+  // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('ChainBoard API')
     .setDescription('A feed-style Web3 discussion and tipping platform for multi-chain developer communities')
@@ -70,12 +77,17 @@ async function bootstrap() {
     .addTag('notifications', 'User notifications')
     .addTag('messages', 'Direct messages')
     .addTag('moderation', 'Content moderation')
+    .addTag('nfts', 'NFT management endpoints')
+    .addTag('wallet-activity', 'Wallet activity tracking')
+    .addTag('stellar', 'Stellar blockchain integration endpoints')
     .addBearerAuth()
     .build();
-
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}`);
 }
+
 bootstrap();
