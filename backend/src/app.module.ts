@@ -19,6 +19,7 @@ import { FollowsModule } from './follows/follows.module';
 import { NftsModule } from './nfts/nfts.module';
 import { SeriesModule } from './series/series.module';
 import { WalletActivityModule } from './wallet-activity/wallet-activity.module';
+import { StellarModule } from './stellar/stellar.module';
 import { User } from './users/entities/user.entity';
 import { Post } from './posts/entities/post.entity';
 import { Tip } from './tips/entities/tip.entity';
@@ -76,6 +77,7 @@ import { WinstonLogger } from './common/logger/winston.logger';
     NftsModule,
     SeriesModule,
     WalletActivityModule,
+    StellarModule,
   ],
   controllers: [AppController],
   providers: [
