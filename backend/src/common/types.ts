@@ -20,7 +20,12 @@ export interface NFT {
 
 export interface WalletActivityItem {
   id: string;
-  type: 'tip' | 'stellar_payment' | 'ethereum_transfer' | 'stellar_contract' | 'ethereum_contract';
+  type:
+    | 'tip'
+    | 'stellar_payment'
+    | 'ethereum_transfer'
+    | 'stellar_contract'
+    | 'ethereum_contract';
   chain: Chain;
   amount?: number;
   fromAddress?: string;

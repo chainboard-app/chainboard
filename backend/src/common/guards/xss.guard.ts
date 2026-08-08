@@ -1,54 +1,61 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return */
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { sanitizeHtml } from '../utils/sanitizer';
 
 @Injectable()
-export class XssSanitizerInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+export class XssGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest();
-    
+    const isPublic = this.reflector.get<boolean>(
+      'isPublic',
+      context.getHandler(),
+    );
+
+    if (isPublic) {
+      return true;
+    }
+
     // Sanitize request body
     if (request.body) {
       request.body = this.sanitizeObject(request.body);
     }
-    
-    // Sanitize query params
+
+    // Sanitize query parameters
     if (request.query) {
       request.query = this.sanitizeObject(request.query);
     }
-    
-    return next.handle();
+
+    return true;
   }
-  
+
   private sanitizeObject(obj: any): any {
-    if (typeof obj !== 'object' || obj === null) {
-      return this.sanitizeString(obj);
+    if (!obj || typeof obj !== 'object') {
+      return obj;
     }
-    
+
     if (Array.isArray(obj)) {
-      return obj.map(item => this.sanitizeObject(item));
+      return obj.map((item) => this.sanitizeObject(item));
     }
-    
+
     const sanitized: any = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        sanitized[key] = this.sanitizeObject(obj[key]);
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        if (typeof obj[key] === 'string') {
+          sanitized[key] = sanitizeHtml(obj[key]);
+        } else if (typeof obj[key] === 'object') {
+          sanitized[key] = this.sanitizeObject(obj[key]);
+        } else {
+          sanitized[key] = obj[key];
+        }
       }
     }
-    
+
     return sanitized;
-  }
-  
-  private sanitizeString(value: any): any {
-    if (typeof value !== 'string') {
-      return value;
-    }
-    
-    // Remove potentially dangerous HTML/JS patterns
-    return value
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/javascript:/gi, '')
-      .replace(/on\w+\s*=/gi, '')
-      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
   }
 }

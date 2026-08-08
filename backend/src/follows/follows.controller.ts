@@ -6,12 +6,18 @@ export class FollowsController {
   constructor(private readonly followsService: FollowsService) {}
 
   @Post('follow')
-  follow(@Param('id') followingId: string, @Body('followerId') followerId: string) {
+  follow(
+    @Param('id') followingId: string,
+    @Body('followerId') followerId: string,
+  ) {
     return this.followsService.follow(followerId, followingId);
   }
 
   @Delete('follow')
-  unfollow(@Param('id') followingId: string, @Body('followerId') followerId: string) {
+  unfollow(
+    @Param('id') followingId: string,
+    @Body('followerId') followerId: string,
+  ) {
     return this.followsService.unfollow(followerId, followingId);
   }
 

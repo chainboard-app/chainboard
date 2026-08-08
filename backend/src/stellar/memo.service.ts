@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as StellarSdk from '@stellar/stellar-sdk';
 
@@ -29,15 +30,19 @@ export class MemoService {
     switch (type) {
       case MemoType.TEXT:
         if (memo.length > 28) {
-          throw new BadRequestException('Text memo must be 28 characters or less');
+          throw new BadRequestException(
+            'Text memo must be 28 characters or less',
+          );
         }
         // Text memos should be ASCII printable
         if (!/^[\x20-\x7E]*$/.test(memo)) {
-          throw new BadRequestException('Text memo must contain only ASCII printable characters');
+          throw new BadRequestException(
+            'Text memo must contain only ASCII printable characters',
+          );
         }
         return { type: MemoType.TEXT, value: memo };
 
-      case MemoType.ID:
+      case MemoType.ID: {
         if (!/^\d+$/.test(memo)) {
           throw new BadRequestException('ID memo must contain only digits');
         }
@@ -46,24 +51,31 @@ export class MemoService {
           throw new BadRequestException('ID memo must be less than 2^64');
         }
         return { type: MemoType.ID, value: memo };
+      }
 
-      case MemoType.HASH:
+      case MemoType.HASH: {
         if (memo.length !== 64) {
-          throw new BadRequestException('Hash memo must be exactly 64 hex characters');
+          throw new BadRequestException(
+            'Hash memo must be exactly 64 hex characters',
+          );
         }
         if (!/^[0-9a-fA-F]{64}$/.test(memo)) {
           throw new BadRequestException('Hash memo must be valid hex');
         }
         return { type: MemoType.HASH, value: memo };
+      }
 
-      case MemoType.RETURN:
+      case MemoType.RETURN: {
         if (memo.length !== 64) {
-          throw new BadRequestException('Return memo must be exactly 64 hex characters');
+          throw new BadRequestException(
+            'Return memo must be exactly 64 hex characters',
+          );
         }
         if (!/^[0-9a-fA-F]{64}$/.test(memo)) {
           throw new BadRequestException('Return memo must be valid hex');
         }
         return { type: MemoType.RETURN, value: memo };
+      }
 
       default:
         return { type: MemoType.NONE, value: '' };
@@ -92,6 +104,7 @@ export class MemoService {
   /**
    * Extract memo from a Stellar transaction
    */
+
   extractMemoFromTransaction(transactionXdr: string): Memo | null {
     try {
       const transaction = StellarSdk.TransactionBuilder.fromXDR(
@@ -100,6 +113,7 @@ export class MemoService {
       );
 
       // Check if it's a regular transaction (not fee bump)
+
       if ('memo' in transaction) {
         const memo = (transaction as any).memo;
         if (!memo) {
@@ -107,6 +121,7 @@ export class MemoService {
         }
 
         // Check memo type based on the value
+
         if (memo._type === StellarSdk.xdr.MemoType.memoText()) {
           return { type: MemoType.TEXT, value: memo._value.toString('utf8') };
         } else if (memo._type === StellarSdk.xdr.MemoType.memoId()) {
@@ -130,28 +145,32 @@ export class MemoService {
    */
   generateMemo(type: MemoType = MemoType.ID): string {
     switch (type) {
-      case MemoType.ID:
+      case MemoType.ID: {
         // Generate a random 64-bit unsigned integer
         const randomId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
         return randomId.toString();
-      
+      }
+
       case MemoType.HASH:
-      case MemoType.RETURN:
+      case MemoType.RETURN: {
         // Generate a random 32-byte hash
-        const randomBytes = Buffer.from(Array.from({ length: 32 }, () => 
-          Math.floor(Math.random() * 256)
-        ));
+        const randomBytes = Buffer.from(
+          Array.from({ length: 32 }, () => Math.floor(Math.random() * 256)),
+        );
         return randomBytes.toString('hex');
-      
-      case MemoType.TEXT:
+      }
+
+      case MemoType.TEXT: {
         // Generate a random alphanumeric string
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const chars =
+          'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let result = '';
         for (let i = 0; i < 28; i++) {
           result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return result;
-      
+      }
+
       default:
         return '';
     }
@@ -164,7 +183,7 @@ export class MemoService {
     try {
       this.parseMemo(memo, type);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

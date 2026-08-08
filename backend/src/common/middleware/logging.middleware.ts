@@ -6,21 +6,14 @@ export class LoggingMiddleware implements NestMiddleware {
   private readonly logger = new Logger(LoggingMiddleware.name);
 
   use(req: Request, res: Response, next: NextFunction) {
-    const { method, originalUrl, ip } = req;
-    const userAgent = req.get('User-Agent') || '';
-    const requestId = req.id;
+    const { method, url, ip } = req;
+    const userAgent = req.get('user-agent') || '';
 
-    this.logger.log(
-      `${method} ${originalUrl} - IP: ${ip} - UserAgent: ${userAgent} - RequestID: ${requestId}`,
-    );
+    this.logger.log(`${method} ${url} - ${ip} - ${userAgent}`);
 
-    const start = Date.now();
     res.on('finish', () => {
-      const duration = Date.now() - start;
       const { statusCode } = res;
-      this.logger.log(
-        `${method} ${originalUrl} - Status: ${statusCode} - Duration: ${duration}ms - RequestID: ${requestId}`,
-      );
+      this.logger.log(`${method} ${url} - ${statusCode}`);
     });
 
     next();

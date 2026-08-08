@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
@@ -27,11 +28,13 @@ export class PostsService {
 
     return this.postsRepository
       .createQueryBuilder('post')
-      .where(
-        "post.searchVector @@ plainto_tsquery('english', :query)",
-        { query },
+      .where("post.searchVector @@ plainto_tsquery('english', :query)", {
+        query,
+      })
+      .orderBy(
+        "ts_rank(post.searchVector, plainto_tsquery('english', :query))",
+        'DESC',
       )
-      .orderBy("ts_rank(post.searchVector, plainto_tsquery('english', :query))", 'DESC')
       .leftJoinAndSelect('post.author', 'author')
       .getMany();
   }
@@ -39,8 +42,7 @@ export class PostsService {
   @CacheKey('trending_posts')
   @CacheTTL(120)
   async getTrending(): Promise<Post[]> {
-    const now = new Date();
-    return this.postsRepository
+    const raw = await this.postsRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .select('post.*, author.*')
@@ -51,12 +53,16 @@ export class PostsService {
       )
       .orderBy('score', 'DESC')
       .limit(20)
-      .getRawMany()
-      .then(raw => raw.map(r => this.postsRepository.create(r)));
+      .getRawMany();
+    return raw.map((r) => this.postsRepository.create(r));
   }
 
-  async getReactions(postId: string): Promise<{ [key in ReactionType]: number }> {
-    const reactions = await this.reactionsRepository.find({ where: { postId } });
+  async getReactions(
+    postId: string,
+  ): Promise<{ [key in ReactionType]: number }> {
+    const reactions = await this.reactionsRepository.find({
+      where: { postId },
+    });
     const counts = { fire: 0, build: 0, handshake: 0 };
     for (const r of reactions) {
       counts[r.type]++;
@@ -64,14 +70,24 @@ export class PostsService {
     return counts;
   }
 
-  async addReaction(postId: string, userId: string, type: ReactionType): Promise<Reaction> {
-    const existing = await this.reactionsRepository.findOne({ where: { postId, userId, type } });
+  async addReaction(
+    postId: string,
+    userId: string,
+    type: ReactionType,
+  ): Promise<Reaction> {
+    const existing = await this.reactionsRepository.findOne({
+      where: { postId, userId, type },
+    });
     if (existing) return existing;
     const reaction = this.reactionsRepository.create({ postId, userId, type });
     return this.reactionsRepository.save(reaction);
   }
 
-  async removeReaction(postId: string, userId: string, type: ReactionType): Promise<void> {
+  async removeReaction(
+    postId: string,
+    userId: string,
+    type: ReactionType,
+  ): Promise<void> {
     await this.reactionsRepository.delete({ postId, userId, type });
   }
 
@@ -85,7 +101,10 @@ export class PostsService {
     }
 
     if (!post.isPinned) {
-      await this.postsRepository.update({ authorId: userId, isPinned: true }, { isPinned: false, pinnedAt: null });
+      await this.postsRepository.update(
+        { authorId: userId, isPinned: true },
+        { isPinned: false, pinnedAt: null },
+      );
     }
 
     post.isPinned = !post.isPinned;
@@ -137,18 +156,29 @@ export class PostsService {
       tipsByDay.set(day, (tipsByDay.get(day) || 0) + Number(tip.amount));
     }
 
-    const tipsOverTime = Array.from(tipsByDay.entries()).map(([date, amount]) => ({
-      date,
-      amount,
-    }));
+    const tipsOverTime = Array.from(tipsByDay.entries()).map(
+      ([date, amount]) => ({
+        date,
+        amount,
+      }),
+    );
 
     const topPosts = posts
-      .sort((a, b) => (b.upvotes + b.impressions + b.tipsReceived) - (a.upvotes + a.impressions + a.tipsReceived))
+      .sort(
+        (a, b) =>
+          b.upvotes +
+          b.impressions +
+          b.tipsReceived -
+          (a.upvotes + a.impressions + a.tipsReceived),
+      )
       .slice(0, 5);
 
     return {
       totalImpressions: posts.reduce((sum, post) => sum + post.impressions, 0),
-      totalTips: posts.reduce((sum, post) => sum + Number(post.tipsReceived), 0),
+      totalTips: posts.reduce(
+        (sum, post) => sum + Number(post.tipsReceived),
+        0,
+      ),
       tipsOverTime,
       topPosts,
     };

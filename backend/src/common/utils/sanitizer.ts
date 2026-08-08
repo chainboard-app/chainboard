@@ -7,25 +7,30 @@
  */
 export function sanitizeHtml(input: string): string {
   if (!input) return '';
-  
+
+  let sanitized = input;
+
   // Remove script tags and their content
-  let sanitized = input.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
-  
+  sanitized = sanitized.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, '');
+
   // Remove iframe tags
   sanitized = sanitized.replace(/<iframe\b[^>]*>([\s\S]*?)<\/iframe>/gim, '');
-  
+
   // Remove object tags
   sanitized = sanitized.replace(/<object\b[^>]*>([\s\S]*?)<\/object>/gim, '');
-  
+
   // Remove embed tags
   sanitized = sanitized.replace(/<embed\b[^>]*>/gim, '');
-  
+
   // Remove on* event handlers
-  sanitized = sanitized.replace(/\s*on\w+\s*=\s*("[^"]*"|'[^']*'|[^"'>\s]+)/gim, '');
-  
+  sanitized = sanitized.replace(
+    /\s*on\w+\s*=\s*("[^"]*"|'[^']*'|[^"'>\s]+)/gim,
+    '',
+  );
+
   // Remove javascript: protocol
   sanitized = sanitized.replace(/javascript:/gim, '');
-  
+
   return sanitized.trim();
 }
 
@@ -34,7 +39,7 @@ export function sanitizeHtml(input: string): string {
  */
 export function sanitizeInput(input: string): string {
   if (!input) return '';
-  
+
   const map: Record<string, string> = {
     '&': '&amp;',
     '<': '&lt;',
@@ -43,7 +48,7 @@ export function sanitizeInput(input: string): string {
     "'": '&#x27;',
     '/': '&#x2F;',
   };
-  
+
   const reg = /[&<>"'/]/g;
   return input.replace(reg, (match) => map[match]);
 }
@@ -53,7 +58,7 @@ export function sanitizeInput(input: string): string {
  */
 export function sanitizeUsername(username: string): string {
   if (!username) return '';
-  
+
   // Only allow alphanumeric, underscores, and hyphens
   return username.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
 }
@@ -63,7 +68,7 @@ export function sanitizeUsername(username: string): string {
  */
 export function sanitizeWalletAddress(address: string): string {
   if (!address) return '';
-  
+
   // Remove whitespace and convert to lowercase for consistency
   return address.trim().toLowerCase();
 }
@@ -73,9 +78,9 @@ export function sanitizeWalletAddress(address: string): string {
  */
 export function sanitizeUrlParam(param: string): string {
   if (!param) return '';
-  
+
   // Remove potentially dangerous characters
-  return param.replace(/[<>\"'&]/g, '');
+  return param.replace(/[<>"'&]/g, '');
 }
 
 /**

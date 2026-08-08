@@ -31,7 +31,10 @@ export class ModerationService {
       relations: ['post', 'post.author'],
     });
 
-    const groupedReports = new Map<string, { post: Post; reports: Report[]; count: number }>();
+    const groupedReports = new Map<
+      string,
+      { post: Post; reports: Report[]; count: number }
+    >();
 
     for (const report of reports) {
       if (!groupedReports.has(report.postId)) {
@@ -46,7 +49,9 @@ export class ModerationService {
       group.count += 1;
     }
 
-    return Array.from(groupedReports.values()).sort((a, b) => b.count - a.count);
+    return Array.from(groupedReports.values()).sort(
+      (a, b) => b.count - a.count,
+    );
   }
 
   async dismissReports(postId: string) {

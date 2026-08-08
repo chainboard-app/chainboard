@@ -25,8 +25,18 @@ export interface TipHistoryItem {
   id: string;
   amount: number;
   chain: string;
-  sender: { id: string; displayName: string; username: string; avatarUrl?: string };
-  receiver: { id: string; displayName: string; username: string; avatarUrl?: string };
+  sender: {
+    id: string;
+    displayName: string;
+    username: string;
+    avatarUrl?: string;
+  };
+  receiver: {
+    id: string;
+    displayName: string;
+    username: string;
+    avatarUrl?: string;
+  };
   createdAt: Date;
   postId?: string;
 }

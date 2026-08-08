@@ -23,7 +23,7 @@ describe('AppController', () => {
   describe('health check', () => {
     it('should return health status object', () => {
       const result = appController.getHealth();
-      
+
       expect(result).toHaveProperty('status');
       expect(result).toHaveProperty('timestamp');
       expect(result).toHaveProperty('uptime');
@@ -37,13 +37,13 @@ describe('AppController', () => {
     it('should return current timestamp in ISO format', () => {
       const result = appController.getHealth();
       const timestamp = new Date(result.timestamp);
-      
+
       expect(timestamp.toISOString()).toBe(result.timestamp);
     });
 
     it('should return uptime as a positive number', () => {
       const result = appController.getHealth();
-      
+
       expect(result.uptime).toBeGreaterThanOrEqual(0);
     });
   });

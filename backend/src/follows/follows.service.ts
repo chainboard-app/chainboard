@@ -34,9 +34,11 @@ export class FollowsService {
     await this.followRepository.save({ followerId, followingId });
 
     await this.userRepository.update(followerId, {
-      followingCount: follower.followingCount + 1 });
+      followingCount: follower.followingCount + 1,
+    });
     await this.userRepository.update(followingId, {
-      followersCount: following.followersCount + 1 });
+      followersCount: following.followersCount + 1,
+    });
   }
 
   async unfollow(followerId: string, followingId: string): Promise<void> {
@@ -60,9 +62,11 @@ export class FollowsService {
     await this.followRepository.remove(existingFollow);
 
     await this.userRepository.update(followerId, {
-      followingCount: Math.max(0, follower.followingCount - 1) });
+      followingCount: Math.max(0, follower.followingCount - 1),
+    });
     await this.userRepository.update(followingId, {
-      followersCount: Math.max(0, following.followersCount - 1) });
+      followersCount: Math.max(0, following.followersCount - 1),
+    });
   }
 
   async getFollowers(userId: string): Promise<User[]> {
@@ -70,7 +74,7 @@ export class FollowsService {
       where: { followingId: userId },
       relations: ['follower'],
     });
-    return follows.map(follow => follow.follower);
+    return follows.map((follow) => follow.follower);
   }
 
   async getFollowing(userId: string): Promise<User[]> {
@@ -78,6 +82,6 @@ export class FollowsService {
       where: { followerId: userId },
       relations: ['following'],
     });
-    return follows.map(follow => follow.following);
+    return follows.map((follow) => follow.following);
   }
 }

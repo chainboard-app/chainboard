@@ -1,4 +1,13 @@
-import { Controller, Get, Query, Post, Param, Body, Delete, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Param,
+  Body,
+  Delete,
+  Patch,
+} from '@nestjs/common';
 import { PostsService } from './posts.service';
 import { Post as PostEntity } from './entities/post.entity';
 import { Reaction, ReactionType } from './entities/reaction.entity';
@@ -18,7 +27,9 @@ export class PostsController {
   }
 
   @Get(':id/reactions')
-  getReactions(@Param('id') id: string): Promise<{ [key in ReactionType]: number }> {
+  getReactions(
+    @Param('id') id: string,
+  ): Promise<{ [key in ReactionType]: number }> {
     return this.postsService.getReactions(id);
   }
 
@@ -41,7 +52,7 @@ export class PostsController {
   @Patch(':id/pin')
   togglePin(
     @Param('id') id: string,
-    @Body() body: { userId: string }
+    @Body() body: { userId: string },
   ): Promise<PostEntity> {
     return this.postsService.togglePin(id, body.userId);
   }

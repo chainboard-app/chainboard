@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { StellarService } from './stellar.service';
@@ -39,13 +40,16 @@ export class StellarController {
   @Post('payment')
   @ApiOperation({ summary: 'Create a payment transaction' })
   @ApiResponse({ status: 200, description: 'Returns signed transaction XDR' })
-  async createPayment(@Body() body: {
-    fromSecret: string;
-    toPublicKey: string;
-    amount: string;
-    assetCode?: string;
-    assetIssuer?: string;
-  }) {
+  async createPayment(
+    @Body()
+    body: {
+      fromSecret: string;
+      toPublicKey: string;
+      amount: string;
+      assetCode?: string;
+      assetIssuer?: string;
+    },
+  ) {
     const xdr = await this.stellarService.createPaymentTransaction(body);
     return { xdr };
   }
@@ -74,7 +78,8 @@ export class StellarController {
   @ApiOperation({ summary: 'Resolve a Stellar Federation address' })
   @ApiResponse({ status: 200, description: 'Resolved account ID' })
   async resolveFederation(@Param('address') address: string) {
-    const accountId = await this.stellarService.resolveFederationAddress(address);
+    const accountId =
+      await this.stellarService.resolveFederationAddress(address);
     return { accountId };
   }
 
@@ -98,10 +103,13 @@ export class StellarController {
   @Post('contract/deploy')
   @ApiOperation({ summary: 'Deploy a Soroban contract' })
   @ApiResponse({ status: 200, description: 'Contract deployment result' })
-  async deployContract(@Body() body: {
-    sourceSecret: string;
-    wasm: string; // Base64 encoded WASM
-  }) {
+  async deployContract(
+    @Body()
+    body: {
+      sourceSecret: string;
+      wasm: string; // Base64 encoded WASM
+    },
+  ) {
     const wasm = Buffer.from(body.wasm, 'base64');
     return this.stellarService.deployContract(body.sourceSecret, wasm);
   }
@@ -109,12 +117,15 @@ export class StellarController {
   @Post('contract/invoke')
   @ApiOperation({ summary: 'Invoke a Soroban contract method' })
   @ApiResponse({ status: 200, description: 'Contract invocation result' })
-  async invokeContract(@Body() body: {
-    contractId: string;
-    method: string;
-    args: any[];
-    sourceSecret?: string;
-  }) {
+  async invokeContract(
+    @Body()
+    body: {
+      contractId: string;
+      method: string;
+      args: any[];
+      sourceSecret?: string;
+    },
+  ) {
     return this.stellarService.invokeContract(
       body.contractId,
       body.method,

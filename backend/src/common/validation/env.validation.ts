@@ -1,5 +1,11 @@
-import { plainToClass, Transform } from 'class-transformer';
-import { IsString, IsNumber, IsBoolean, IsOptional, IsEnum, validateSync } from 'class-validator';
+import { plainToClass } from 'class-transformer';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsEnum,
+  validateSync,
+} from 'class-validator';
 
 export enum Environment {
   Development = 'development',
@@ -9,6 +15,27 @@ export enum Environment {
 
 export class EnvironmentVariables {
   @IsString()
+  @IsOptional()
+  DATABASE_HOST: string;
+
+  @IsNumber()
+  @IsOptional()
+  DATABASE_PORT: number;
+
+  @IsString()
+  @IsOptional()
+  DATABASE_USERNAME: string;
+
+  @IsString()
+  @IsOptional()
+  DATABASE_PASSWORD: string;
+
+  @IsString()
+  @IsOptional()
+  DATABASE_NAME: string;
+
+  @IsString()
+  @IsOptional()
   DATABASE_URL: string;
 
   @IsOptional()
@@ -20,13 +47,20 @@ export class EnvironmentVariables {
   NODE_ENV?: Environment;
 
   @IsString()
+  @IsOptional()
   GITHUB_CLIENT_ID: string;
 
   @IsString()
+  @IsOptional()
   GITHUB_CLIENT_SECRET: string;
 
   @IsString()
+  @IsOptional()
   JWT_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  JWT_EXPIRES_IN: string;
 
   @IsOptional()
   @IsString()
@@ -36,9 +70,17 @@ export class EnvironmentVariables {
   @IsEnum(['testnet', 'mainnet', 'local'])
   STELLAR_NETWORK?: string;
 
-  @IsOptional()
   @IsString()
-  STELLAR_RPC_URL?: string;
+  @IsOptional()
+  STELLAR_RPC_URL: string;
+
+  @IsString()
+  @IsOptional()
+  STELLAR_HORIZON_URL: string;
+
+  @IsString()
+  @IsOptional()
+  STELLAR_FRIENDBOT_URL: string;
 
   @IsOptional()
   @IsString()
@@ -76,11 +118,15 @@ export function validate(config: Record<string, unknown>) {
 
   if (errors.length > 0) {
     const errorMessages = errors.map((error) => {
-      const constraints = error.constraints ? Object.values(error.constraints) : [];
+      const constraints = error.constraints
+        ? Object.values(error.constraints)
+        : [];
       return `${error.property}: ${constraints.join(', ')}`;
     });
 
-    throw new Error(`Environment validation failed:\n${errorMessages.join('\n')}`);
+    throw new Error(
+      `Environment validation failed:\n${errorMessages.join('\n')}`,
+    );
   }
 
   return validatedConfig;

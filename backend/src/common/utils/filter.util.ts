@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+import { Injectable } from '@nestjs/common';
+
 export interface FilterParams {
   search?: string;
   startDate?: Date;
@@ -6,25 +9,24 @@ export interface FilterParams {
   [key: string]: any;
 }
 
-export class FilterHelper {
-  static buildWhereClause(filters: FilterParams): any {
+@Injectable()
+export class FilterUtil {
+  buildWhereClause(filters: any): any {
     const where: any = {};
 
     if (filters.search) {
       where.$or = [
-        { title: { $ilike: `%${filters.search}%` } },
-        { content: { $ilike: `%${filters.search}%` } },
+        { title: { $like: `%${filters.search}%` } },
+        { content: { $like: `%${filters.search}%` } },
       ];
     }
 
-    if (filters.startDate || filters.endDate) {
-      where.createdAt = {};
-      if (filters.startDate) {
-        where.createdAt.$gte = filters.startDate;
-      }
-      if (filters.endDate) {
-        where.createdAt.$lte = filters.endDate;
-      }
+    if (filters.startDate) {
+      where.createdAt = { ...where.createdAt, $gte: filters.startDate };
+    }
+
+    if (filters.endDate) {
+      where.createdAt = { ...where.createdAt, $lte: filters.endDate };
     }
 
     if (filters.status) {

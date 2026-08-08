@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-floating-promises */
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -11,20 +12,22 @@ import { PerformanceMiddleware } from './common/middleware/performance.middlewar
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Security headers with Helmet
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:"],
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
       },
-    },
-    crossOriginEmbedderPolicy: false,
-  }));
-  
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
+
   // CORS with whitelist
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
     'http://localhost:3000',
@@ -67,7 +70,9 @@ async function bootstrap() {
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('ChainBoard API')
-    .setDescription('A feed-style Web3 discussion and tipping platform for multi-chain developer communities')
+    .setDescription(
+      'A feed-style Web3 discussion and tipping platform for multi-chain developer communities',
+    )
     .setVersion('1.0')
     .addTag('auth', 'Authentication endpoints')
     .addTag('users', 'User management')

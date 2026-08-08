@@ -7,7 +7,12 @@ export class MessagesController {
 
   @Post()
   async sendMessage(
-    @Body() body: { senderId: string; recipientId: string; encryptedContent: string },
+    @Body()
+    body: {
+      senderId: string;
+      recipientId: string;
+      encryptedContent: string;
+    },
   ) {
     return this.messagesService.sendMessage(
       body.senderId,
@@ -17,7 +22,10 @@ export class MessagesController {
   }
 
   @Get(':userId')
-  async getConversation(@Param('userId') userId: string, @Body('currentUserId') currentUserId: string) {
+  async getConversation(
+    @Param('userId') userId: string,
+    @Body('currentUserId') currentUserId: string,
+  ) {
     return this.messagesService.getConversation(currentUserId, userId);
   }
 

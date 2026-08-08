@@ -16,7 +16,11 @@ export class SeriesService {
     private userRepository: Repository<User>,
   ) {}
 
-  async createSeries(authorId: string, title: string, description?: string): Promise<Series> {
+  async createSeries(
+    authorId: string,
+    title: string,
+    description?: string,
+  ): Promise<Series> {
     const author = await this.userRepository.findOneBy({ id: authorId });
     if (!author) {
       throw new NotFoundException('User not found');
@@ -54,7 +58,11 @@ export class SeriesService {
     });
   }
 
-  async addPostToSeries(seriesId: string, postId: string, order: number): Promise<Post> {
+  async addPostToSeries(
+    seriesId: string,
+    postId: string,
+    order: number,
+  ): Promise<Post> {
     const series = await this.seriesRepository.findOneBy({ id: seriesId });
     if (!series) {
       throw new NotFoundException('Series not found');

@@ -6,7 +6,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import {
-  Chain,
   WalletAddress,
   NotificationType,
   NotificationDelivery,

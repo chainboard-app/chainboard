@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Message } from './entities/message.entity';
 
 @Injectable()
@@ -23,10 +23,7 @@ export class MessagesService {
     return this.messagesRepository.save(message);
   }
 
-  async getConversation(
-    userId1: string,
-    userId2: string,
-  ): Promise<Message[]> {
+  async getConversation(userId1: string, userId2: string): Promise<Message[]> {
     return this.messagesRepository
       .createQueryBuilder('message')
       .where(
@@ -42,17 +39,24 @@ export class MessagesService {
   async getConversations(userId: string): Promise<any[]> {
     const messages = await this.messagesRepository
       .createQueryBuilder('message')
-      .where('message.senderId = :userId OR message.recipientId = :userId', { userId })
+      .where('message.senderId = :userId OR message.recipientId = :userId', {
+        userId,
+      })
       .leftJoinAndSelect('message.sender', 'sender')
       .leftJoinAndSelect('message.recipient', 'recipient')
       .orderBy('message.createdAt', 'DESC')
       .getMany();
 
-    const conversationsMap = new Map<string, { user: any; lastMessage: Message; unreadCount: number }>();
+    const conversationsMap = new Map<
+      string,
+      { user: any; lastMessage: Message; unreadCount: number }
+    >();
 
     for (const message of messages) {
-      const otherUserId = message.senderId === userId ? message.recipientId : message.senderId;
-      const otherUser = message.senderId === userId ? message.recipient : message.sender;
+      const otherUserId =
+        message.senderId === userId ? message.recipientId : message.senderId;
+      const otherUser =
+        message.senderId === userId ? message.recipient : message.sender;
 
       if (!conversationsMap.has(otherUserId)) {
         conversationsMap.set(otherUserId, {
