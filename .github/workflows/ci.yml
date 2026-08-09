@@ -106,3 +106,28 @@ jobs:
           files: ./backend/coverage/lcov.info
           flags: backend
           fail_ci_if_error: false
+
+      - name: Run E2E tests
+        run: pnpm run test:e2e
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/chainboard_test
+          NODE_ENV: test
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
