@@ -2,6 +2,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { Reflector } from '@nestjs/core';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -9,6 +11,7 @@ import { StellarExceptionFilter } from './common/filters/stellar-exception.filte
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
 import { PerformanceMiddleware } from './common/middleware/performance.middleware';
+import { CacheResponseInterceptor } from './common/interceptors/cache-response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -66,6 +69,14 @@ async function bootstrap() {
   // Global exception filters
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalFilters(new StellarExceptionFilter());
+
+  // Global interceptors
+  const reflector = app.get(Reflector);
+  const cacheManager = app.get(CACHE_MANAGER);
+  app.useGlobalInterceptors(new CacheResponseInterceptor(reflector, cacheManager));
+
+  // API Versioning
+  app.setGlobalPrefix('api/v1');
 
   // Swagger documentation
   const config = new DocumentBuilder()
