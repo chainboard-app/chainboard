@@ -18,6 +18,7 @@ import { MessagesModule } from './messages/messages.module';
 import { NftsModule } from './nfts/nfts.module';
 import { WalletActivityModule } from './wallet-activity/wallet-activity.module';
 import { StellarModule } from './stellar/stellar.module';
+import { WebSocketModule } from './websocket/websocket.module';
 import { WinstonLogger } from './common/logger/winston.logger';
 import { User } from './users/entities/user.entity';
 import { Post } from './posts/entities/post.entity';
@@ -72,6 +73,7 @@ import { validate } from './common/validation/env.validation';
     NftsModule,
     WalletActivityModule,
     StellarModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [
