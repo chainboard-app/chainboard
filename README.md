@@ -4,7 +4,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Status](https://img.shields.io/badge/status-active-brightgreen)
-![Chains](https://img.shields.io/badge/chains-Stellar%20%7C%20Ethereum-purple)
+![Chains](https://img.shields.io/badge/chains-Stellar%20%7C%20Ethereum%20%7C%20Polygon%20%7C%20Solana-purple)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 ![Built With](https://img.shields.io/badge/built%20with-React%20%7C%20NestJS%20%7C%20Soroban-informational)
 
@@ -33,7 +33,7 @@ ChainBoard is an open-source, feed-style discussion platform purpose-built for W
 
 Think of it as **Twitter/X meets Reddit, built natively for Web3** — with real on-chain value exchange at its core.
 
-ChainBoard currently supports the **Stellar** and **Ethereum** ecosystems, with a modular architecture designed to expand to additional chains over time.
+ChainBoard currently supports the **Stellar**, **Ethereum**, **Polygon**, and **Solana** ecosystems, with a modular architecture designed to expand to additional chains over time.
 
 ---
 
@@ -42,13 +42,25 @@ ChainBoard currently supports the **Stellar** and **Ethereum** ecosystems, with 
 | Feature | Description |
 |---|---|
 | 🐦 Feed-style posts | Share thoughts, updates, and questions in a familiar social format |
-| 🔗 Multi-chain support | Stellar and Ethereum to start, with architecture ready for expansion |
-| 🔐 Dual authentication | Sign in via GitHub OAuth or a Web3 wallet (Freighter / MetaMask) |
+| 🔗 Multi-chain support | Stellar, Ethereum, Polygon, and Solana with modular architecture for expansion |
+| 🔐 Dual authentication | Sign in via GitHub OAuth or a Web3 wallet (Freighter / MetaMask / Phantom) |
 | 💸 On-chain tipping | Reward great posts with USDC directly on-chain — no intermediaries |
 | 🗳️ Upvote system | Community-driven content ranking to surface the best discussions |
 | 🏷️ Chain tags | Filter and discover content by blockchain ecosystem |
 | 👤 Builder profiles | Showcase projects, contributions, and on-chain activity |
 | 🔔 Notifications | Real-time updates on replies, tips, and mentions |
+| 💬 Messaging | Direct messaging between users for private conversations |
+| 👥 Communities | Create and join topic-based communities for focused discussions |
+| 🤝 Follow system | Follow other builders to stay updated on their activity |
+| 🎨 NFT management | Display and manage NFT collections across supported chains |
+| 📊 Reputation system | On-chain contribution scoring for builders |
+| 📚 Content series | Organize related posts into series for structured content |
+| 🔍 Wallet activity | Track and display on-chain wallet activity and transaction history |
+| 🛡️ Moderation tools | Content moderation and community management features |
+| ⚡ Real-time updates | WebSocket support for live feed and notification updates |
+| 📈 Analytics dashboard | Track engagement metrics and community growth |
+| 🏆 Leaderboard | Display top contributors and most active community members |
+| 💾 Tip history | View complete history of sent and received tips |
 
 ---
 
@@ -56,11 +68,19 @@ ChainBoard currently supports the **Stellar** and **Ethereum** ecosystems, with 
 
 | Layer | Technology |
 |---|---|
-| Frontend | React, TypeScript, TailwindCSS |
-| Backend | NestJS, PostgreSQL |
-| Smart Contracts | Soroban (Stellar), Solidity (Ethereum) |
-| Authentication | GitHub OAuth, Freighter Wallet, MetaMask |
-| Payments | Stellar USDC, ERC-20 USDC |
+| Frontend | React, TypeScript, TailwindCSS, Vite, React Router |
+| Backend | NestJS, PostgreSQL, TypeORM |
+| Blockchain SDKs | Stellar SDK, Solana Web3.js, Ethers.js |
+| Authentication | GitHub OAuth, Freighter Wallet, MetaMask, Phantom |
+| Real-time | Socket.io, WebSockets |
+| Job Queues | BullMQ, Redis |
+| Logging | Winston, Winston Daily Rotate File |
+| API Documentation | Swagger/OpenAPI |
+| Health Monitoring | NestJS Terminus |
+| Task Scheduling | NestJS Schedule |
+| Rate Limiting | NestJS Throttler |
+| Caching | Cache Manager |
+| Payments | Stellar USDC, ERC-20 USDC, SPL tokens |
 
 ---
 
@@ -68,9 +88,15 @@ ChainBoard currently supports the **Stellar** and **Ethereum** ecosystems, with 
 
 ChainBoard is structured as a monorepo with three distinct layers:
 
-- **Frontend** — A React + TypeScript SPA that communicates with the backend REST API and interfaces with wallet extensions directly from the browser.
-- **Backend** — A NestJS service responsible for user management, post storage, authentication, and bridging between the frontend and the blockchain.
-- **Smart Contracts** — On-chain tipping and transaction logic deployed on Stellar (via Soroban) and Ethereum (via Solidity). The contracts are intentionally minimal — they handle only value transfer and event emission.
+- **Frontend** — A React + TypeScript SPA that communicates with the backend REST API and WebSocket server, and interfaces with wallet extensions directly from the browser.
+- **Backend** — A NestJS service responsible for user management, post storage, authentication, and bridging between the frontend and the blockchain. Includes:
+  - REST API for standard CRUD operations
+  - WebSocket server for real-time updates
+  - Job queues (BullMQ) for background processing
+  - Comprehensive logging (Winston)
+  - Health monitoring (Terminus)
+  - Rate limiting and caching
+- **Blockchain Integration** — Modular services for Stellar, Ethereum, Polygon, and Solana that handle wallet connections, transaction signing, and on-chain interactions.
 
 ---
 
@@ -82,22 +108,68 @@ chainboard/
 │   └── src/
 │       ├── components/    # Reusable UI components
 │       ├── pages/         # Route-level page components
+│       │   ├── AnalyticsDashboard/
+│       │   ├── Feed/
+│       │   ├── Leaderboard/
+│       │   ├── Messages/
+│       │   ├── ModerationDashboard/
+│       │   ├── TipHistory/
+│       │   └── UserProfile/
 │       ├── hooks/         # Custom React hooks
+│       ├── lib/           # External library configurations
+│       ├── types/         # TypeScript type definitions
 │       └── utils/         # Helper functions and constants
 │
 ├── backend/               # NestJS REST API
 │   └── src/
 │       ├── auth/          # GitHub OAuth + wallet authentication
+│       ├── blockchains/   # Multi-chain integration services
+│       │   ├── polygon/
+│       │   └── solana/
+│       ├── communities/   # Community management
+│       ├── common/        # Shared infrastructure
+│       │   ├── cache/     # Caching configuration
+│       │   ├── config/    # Configuration management
+│       │   ├── decorators/# Custom decorators
+│       │   ├── filters/   # Exception filters
+│       │   ├── guards/    # Route guards
+│       │   ├── health/    # Health checks
+│       │   ├── integrations/# Third-party integrations
+│       │   ├── interceptors/# Request/response interceptors
+│       │   ├── logger/    # Winston logging
+│       │   ├── middleware/# Custom middleware
+│       │   ├── monitoring/# Metrics and monitoring
+│       │   ├── queues/    # BullMQ job queues
+│       │   ├── services/  # Shared services
+│       │   ├── utils/     # Utility functions
+│       │   └── validation/# Request validation
+│       ├── follows/       # User follow system
+│       ├── messages/      # Direct messaging
+│       ├── moderation/    # Content moderation
+│       ├── nfts/          # NFT management
+│       ├── notifications/ # Notification service
 │       ├── posts/         # Post creation, retrieval, and upvotes
-│       ├── users/         # User profiles and settings
+│       ├── reputation/    # Reputation scoring
+│       ├── series/        # Content series
+│       ├── stellar/       # Stellar-specific services
 │       ├── tips/          # On-chain tipping integration
-│       └── notifications/ # Notification service
+│       ├── users/         # User profiles and settings
+│       ├── wallet-activity/# Wallet activity tracking
+│       └── websocket/     # WebSocket gateway
 │
-├── contracts/             # Smart contracts
-│   ├── stellar/           # Soroban (Rust) contracts
-│   └── ethereum/          # Solidity contracts
+├── kubernetes/            # Kubernetes deployment configurations
+│   └── backend-deployment.yaml
 │
-└── docs/                  # Documentation and guides
+├── scripts/               # Utility scripts
+│   ├── backup.ps1         # Windows backup script
+│   ├── backup.sh          # Linux/Mac backup script
+│   ├── restore.ps1        # Windows restore script
+│   └── restore.sh         # Linux/Mac restore script
+│
+├── .env.example           # Environment variables template
+├── docker-compose.yml     # Docker development setup
+├── Dockerfile             # Production Docker image
+└── package.json           # Root package.json (monorepo)
 ```
 
 ---
@@ -111,8 +183,10 @@ Ensure the following are installed on your system before proceeding:
 - [Node.js](https://nodejs.org/) v18 or higher
 - [pnpm](https://pnpm.io/)
 - [PostgreSQL](https://www.postgresql.org/)
+- [Redis](https://redis.io/) (for BullMQ job queues)
 - [Freighter Wallet](https://www.freighter.app/) (for Stellar features)
-- [MetaMask](https://metamask.io/) (for Ethereum features)
+- [MetaMask](https://metamask.io/) (for Ethereum and Polygon features)
+- [Phantom Wallet](https://phantom.app/) (for Solana features)
 
 ### Installation
 
@@ -147,6 +221,9 @@ Create a `.env` file at the root of the project based on `.env.example`. The fol
 # ─── Database ───────────────────────────────────────────────
 DATABASE_URL=postgresql://user:password@localhost:5432/chainboard
 
+# ─── Redis ──────────────────────────────────────────────────
+REDIS_URL=redis://localhost:6379
+
 # ─── Authentication ─────────────────────────────────────────
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
@@ -155,12 +232,132 @@ JWT_SECRET=your_jwt_secret
 # ─── Stellar ────────────────────────────────────────────────
 STELLAR_NETWORK=testnet
 STELLAR_RPC_URL=https://soroban-testnet.stellar.org
+STELLAR_HORIZON_URL=https://horizon-testnet.stellar.org
 
 # ─── Ethereum ───────────────────────────────────────────────
 ETH_RPC_URL=your_eth_rpc_url
+
+# ─── Polygon ───────────────────────────────────────────────
+POLYGON_RPC_URL=your_polygon_rpc_url
+
+# ─── Solana ────────────────────────────────────────────────
+SOLANA_RPC_URL=https://api.devnet.solana.com
 ```
 
 > ⚠️ Never commit your `.env` file to version control. The `.gitignore` already excludes it by default.
+
+---
+
+## ☸️ Kubernetes Deployment
+
+ChainBoard includes Kubernetes configurations for production deployment.
+
+### Prerequisites
+
+- Kubernetes cluster (v1.20+)
+- kubectl configured for your cluster
+- Docker registry access for pushing images
+
+### Deployment Steps
+
+```bash
+# 1. Build and push Docker images
+docker build -t chainboard/backend:latest .
+docker push chainboard/backend:latest
+
+# 2. Create Kubernetes secrets
+kubectl create secret generic chainboard-secrets \
+  --from-literal=database-url="postgresql://user:password@host:5432/chainboard" \
+  --from-literal=jwt-secret="your_jwt_secret" \
+  --from-literal=redis-url="redis://host:6379"
+
+# 3. Apply the deployment configuration
+kubectl apply -f kubernetes/backend-deployment.yaml
+
+# 4. Verify the deployment
+kubectl get deployments
+kubectl get pods
+kubectl get services
+```
+
+### Configuration
+
+The Kubernetes deployment includes:
+
+- **Replicas**: 3 pods for high availability
+- **Resources**: Configured with requests (256Mi RAM, 250m CPU) and limits (512Mi RAM, 500m CPU)
+- **Health Checks**: Liveness and readiness probes configured
+- **Service**: ClusterIP service exposing port 4000 internally
+
+### Scaling
+
+To scale the deployment:
+
+```bash
+kubectl scale deployment chainboard-backend --replicas=5
+```
+
+---
+
+## 💾 Backup & Restore
+
+ChainBoard includes utility scripts for database backup and restoration.
+
+### Backup
+
+#### Linux/Mac
+
+```bash
+./scripts/backup.sh
+```
+
+#### Windows (PowerShell)
+
+```powershell
+.\scripts\backup.ps1
+```
+
+The backup script will:
+- Create a timestamped backup of the PostgreSQL database
+- Store backups in the `backups/` directory
+- Compress the backup file to save space
+- Keep the last 7 days of backups by default
+
+### Restore
+
+#### Linux/Mac
+
+```bash
+./scripts/restore.sh <backup-file>
+```
+
+#### Windows (PowerShell)
+
+```powershell
+.\scripts\restore.ps1 <backup-file>
+```
+
+The restore script will:
+- Validate the backup file integrity
+- Drop and recreate the database
+- Restore data from the backup file
+- Run any pending migrations
+
+### Configuration
+
+Backup behavior can be configured by modifying the script variables:
+- `BACKUP_DIR`: Directory where backups are stored (default: `./backups`)
+- `RETENTION_DAYS`: Number of days to keep backups (default: 7)
+- `DB_NAME`: Database name (default: `chainboard`)
+
+### Automated Backups
+
+For production environments, consider setting up automated backups using cron:
+
+```bash
+# Daily backup at 2 AM
+0 2 * * * /path/to/chainboard/scripts/backup.sh
+```
 
 ---
 
@@ -168,12 +365,13 @@ ETH_RPC_URL=your_eth_rpc_url
 
 The following features are planned for upcoming releases:
 
-- [ ] **Additional chain support** — Solana, Base, and more
+- [ ] **Additional chain support** — Base, Arbitrum, Optimism, and more
 - [ ] **Token-gated communities** — restrict access to posts or channels by token/NFT ownership
 - [ ] **ENS & Stellar Federation** — display human-readable on-chain identities
-- [ ] **Reputation system** — on-chain contribution scoring for builders
 - [ ] **Mobile app** — React Native client for iOS and Android
 - [ ] **Decentralized storage** — IPFS-backed media uploads
+- [ ] **Advanced analytics** — Enhanced community insights and engagement metrics
+- [ ] **Multi-language support** — Internationalization for global communities
 
 ---
 
