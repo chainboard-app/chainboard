@@ -18,6 +18,19 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: chainboard-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -25,6 +38,7 @@ services:
     container_name: chainboard-backend
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chainboard
+      REDIS_URL: redis://redis:6379
       PORT: 4000
       NODE_ENV: development
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
@@ -37,6 +51,8 @@ services:
       - "4000:4000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - ./backend:/app/backend
@@ -61,3 +77,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
